@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>13</LangVersion>
+        <Version>1.0.0</Version>
+        <UseWindowsForms>true</UseWindowsForms>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <Title>CoreOne.Winforms</Title>
+        <Authors>Juan Lopez</Authors>
+        <Company>Juan Lopez</Company>
+        <PackageProjectUrl>https://github.com/jlopez788/CoreOne.Winforms</PackageProjectUrl>
+        <PackageId>CoreOne.Winforms</PackageId>
+        <Product>CoreOne.Winforms</Product>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <OutputPath>..\bin\</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <OutputPath>..\bin\</OutputPath>
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CoreOne" Version="1.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
+    </ItemGroup>
+
+</Project>
