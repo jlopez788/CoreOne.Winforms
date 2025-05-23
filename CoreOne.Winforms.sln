@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36105.17
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreOne.Winforms", "src\CoreOne.Winforms\CoreOne.Winforms.csproj", "{B7EA2C46-FE3F-4214-93B3-764D2C580142}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreOne.Drawing", "CoreOne.Drawing\CoreOne.Drawing.csproj", "{CA458936-1BAA-4A97-8408-F01A4635CFC1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreOne.Drawing", "src\CoreOne.Drawing\CoreOne.Drawing.csproj", "{CA458936-1BAA-4A97-8408-F01A4635CFC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
