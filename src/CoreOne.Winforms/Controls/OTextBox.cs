@@ -1,6 +1,7 @@
 ﻿using CoreOne.Models;
 using CoreOne.Winforms.Native;
 using CoreOne.Winforms.Services;
+using System.ComponentModel;
 
 namespace CoreOne.Winforms.Controls;
 
@@ -9,7 +10,11 @@ public class OTextBox : TextBox, IControlBorder
     private readonly BackingField<string> BakPlaceholder;
     private readonly ControlStateManager StateManager;
     private readonly SToken Token;
+
+    [RefreshProperties(RefreshProperties.Repaint)]
     public Color BorderColor { get; set; }
+
+    [RefreshProperties(RefreshProperties.Repaint)]
     public string? Placeholder {
         get { return BakPlaceholder.Value; }
         set { BakPlaceholder.UpdateValue(value); }

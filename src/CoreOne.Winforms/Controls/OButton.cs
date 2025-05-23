@@ -11,6 +11,7 @@ public class OButton : Control, IButtonControl, IControlTheme
     public event EventHandler? ButtonClick;
     private readonly LoadingCircle Loading;
     private readonly ControlStateManager StateManager;
+    private readonly SToken Token;
     private int _SplitWidth = 24;
     [DefaultValue(0)]
     [RefreshProperties(RefreshProperties.Repaint)]
@@ -32,7 +33,6 @@ public class OButton : Control, IButtonControl, IControlTheme
         set => StateManager.ThemeType = value;
     }
     protected Rectangle SplitView => new(Width - SplitWidth, 0, SplitWidth, Height);
-    protected SToken Token { get; } = SToken.Create();
 
     public OButton()
     {
@@ -41,6 +41,7 @@ public class OButton : Control, IButtonControl, IControlTheme
             ControlStyles.OptimizedDoubleBuffer |
             ControlStyles.SupportsTransparentBackColor;
         SetStyle(styles, true);
+        Token = this.CreateSToken();
         StateManager = new ControlStateManager(this);
         this.OnEnterClick(this);
 

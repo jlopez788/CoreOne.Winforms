@@ -35,6 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
+      <ProjectReference Include="..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
     </ItemGroup>
 
 </Project>

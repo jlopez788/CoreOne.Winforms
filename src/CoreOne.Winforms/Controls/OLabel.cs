@@ -8,12 +8,17 @@ public class OLabel : Control
 {
     private readonly ControlStateManager StateManager;
     private bool _IsLink;
+    [DefaultValue(false)]
+    [RefreshProperties(RefreshProperties.Repaint)]
     public bool AutoElipsis { get; set; }
 
     public override Font Font {
         get => base.Font;
         set => base.Font = new Font(value!.FontFamily, value!.Size, _IsLink ? FontStyle.Underline : FontStyle.Regular);
     }
+
+    [DefaultValue(false)]
+    [RefreshProperties(RefreshProperties.Repaint)]
     public bool IsLink {
         get => _IsLink;
         set {
@@ -23,6 +28,7 @@ public class OLabel : Control
     }
 
     [DefaultValue(ContentAlignment.MiddleCenter)]
+    [RefreshProperties(RefreshProperties.Repaint)]
     public virtual ContentAlignment TextAlign { get; set; } = ContentAlignment.MiddleCenter;
 
     public OLabel()
