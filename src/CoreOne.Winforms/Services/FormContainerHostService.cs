@@ -1,6 +1,6 @@
 ﻿namespace CoreOne.Winforms.Services;
 
-public class FormContainerHostService(IEnumerable<IHostedFormService> services)
+internal class FormContainerHostService(IEnumerable<IHostedFormService> services)
 {
     private readonly AToken Token = AToken.Create();
 

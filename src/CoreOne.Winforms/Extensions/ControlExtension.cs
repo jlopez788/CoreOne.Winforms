@@ -28,8 +28,7 @@ public static class ControlExtension
     [return: NotNullIfNotNull(nameof(parent))]
     public static TControl? ClearControls<TControl>(this TControl? parent) where TControl : Control
     {
-        if (parent != null)
-        {
+        parent?.CrossThread(() => {
             parent.SuspendLayout();
             foreach (Control control in parent.Controls)
             {
@@ -37,7 +36,8 @@ public static class ControlExtension
             }
             parent.Controls.Clear();
             parent.ResumeLayout(true);
-        }
+        });
+
         return parent;
     }
 
@@ -107,17 +107,16 @@ public static class ControlExtension
 
     public static void SetControls<TControl>(this TControl? parent, IEnumerable<Control>? controls, bool resumeLayout = false) where TControl : Control
     {
-        if (parent is null)
-            return;
-
-        parent.SuspendLayout();
-        foreach (Control control in parent.Controls)
-            control.Dispose();
-        parent.Controls.Clear();
-        var children = controls?.ToArray();
-        if (children?.Length > 0)
-            parent.Controls.AddRange(children);
-        parent.ResumeLayout(resumeLayout);
+        parent?.CrossThread(() => {
+            parent.SuspendLayout();
+            foreach (Control control in parent.Controls)
+                control.Dispose();
+            parent.Controls.Clear();
+            var children = controls?.ToArray();
+            if (children?.Length > 0)
+                parent.Controls.AddRange(children);
+            parent.ResumeLayout(resumeLayout);
+        });
     }
 
     public static bool ShowDialogExt(this Form form, IWin32Window? parent = null, DialogResult result = DialogResult.OK) => form.ShowDialog(parent) == result;
