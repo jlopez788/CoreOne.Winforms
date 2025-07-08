@@ -17,6 +17,7 @@
         <GenerateDocumentationFile>True</GenerateDocumentationFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -30,12 +31,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="..\..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="CoreOne" Version="1.0.3" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
-      <ProjectReference Include="..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
+        <ProjectReference Include="..\..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
+        <ProjectReference Include="..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
     </ItemGroup>
 
 </Project>
