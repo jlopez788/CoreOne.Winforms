@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>13</LangVersion>
-        <Version>1.0.0</Version>
+        <Version>1.0.1.1</Version>
         <UseWindowsForms>true</UseWindowsForms>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Title>CoreOne.Winforms</Title>
@@ -18,6 +18,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IncludeReferencedProjects>true</IncludeReferencedProjects>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
