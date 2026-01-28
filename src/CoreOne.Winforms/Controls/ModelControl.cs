@@ -67,14 +67,11 @@ public partial class ModelControl : UserControl
             Width = 120,
             Height = 35,
             Anchor = AnchorStyles.Top,
-            //TextAlign = ContentAlignment.MiddleCenter,
             BackColor = Color.FromArgb(0, 120, 215),
-            ForeColor = Color.White, 
+            ForeColor = Color.White,
             Cursor = Cursors.Hand,
             Font = new Font(Font.FontFamily, 10, FontStyle.Regular)
         };
-
-       // BtnSave.FlatAppearance.BorderSize = 0;
 
         // Center the button horizontally
         BtnSave.Location = new Point((Width / 2) - (BtnSave.Width / 2), contentSize.Height + 26);
