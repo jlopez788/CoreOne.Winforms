@@ -2,7 +2,7 @@
 
 namespace CoreOne.Winforms;
 
-public interface IView : ITheme
+public interface IView
 {
     event AsyncRun? AsyncRun;
     event InvokeTaskAsync? AsyncTask;

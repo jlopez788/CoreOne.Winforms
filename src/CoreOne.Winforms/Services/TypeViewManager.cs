@@ -1,6 +1,5 @@
 ﻿using CoreOne.Collections;
 using CoreOne.Reactive;
-using CoreOne.Reflection;
 using CoreOne.Winforms.Controls;
 using System.Reflection;
 
@@ -13,13 +12,13 @@ public class TypeViewManager : Data<string, Type>
     public TypeViewManager(Func<Type, IView>? resolve = null)
     {
         var targetCreator = new TargetCreator(null);
-        OnResolve = resolve ?? new Func<Type, IView>(type => (IView)targetCreator.CreateInstance(type));
+        OnResolve = resolve ?? new Func<Type, IView>(type => (IView)targetCreator.CreateInstance(type)!);
     }
 
     public TypeViewManager(IServiceProvider services)
     {
         var targetCreator = new TargetCreator(services);
-        OnResolve = type => (IView)(services.Resolve(type) ?? targetCreator.CreateInstance(type));
+        OnResolve = type => (IView)(services.Resolve(type) ?? targetCreator.CreateInstance(type)!);
     }
 
     public void RegisterViews(Assembly assembly)

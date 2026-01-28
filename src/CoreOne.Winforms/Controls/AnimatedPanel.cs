@@ -7,7 +7,7 @@ using CoreOne.Winforms.Transitions.Animations;
 
 namespace CoreOne.Winforms.Controls;
 
-public class AnimatedPanel : Control, ITheme
+public class AnimatedPanel : Control
 {
     public event EventHandler? AnimationComplete;
     private readonly Stack<History> History;
@@ -29,14 +29,6 @@ public class AnimatedPanel : Control, ITheme
             v => v is null,
             v => CurrentView?.Name.Matches(v.Name) ?? false
         ];
-
-        Theme.Register(this);
-    }
-
-    public void ApplyTheme(Theme theme)
-    {
-        this.ApplyColor(theme.Normal);
-        CurrentView?.ApplyTheme(theme);
     }
 
     public void ChangeView(ViewEventArgs e, bool swipeleft = true) => this.CrossThread(() => OnChangeView(e, swipeleft));
@@ -118,7 +110,6 @@ public class AnimatedPanel : Control, ITheme
         }
         view.Anchor = (AnchorStyles)0xf;
         view.Size = Size;
-        view.ApplyTheme(Theme.Current);
         view.Reload(args.Args);
 
         void AnimationComplete(object? sender, EventArgs _)

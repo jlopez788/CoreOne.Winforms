@@ -6,7 +6,7 @@ using System.Drawing.Drawing2D;
 
 namespace CoreOne.Winforms.Controls;
 
-public class OButton : Control, IButtonControl, IControlTheme
+public class OButton : Control, IButtonControl
 {
     public event EventHandler? ButtonClick;
     private readonly LoadingCircle Loading;
@@ -53,10 +53,6 @@ public class OButton : Control, IButtonControl, IControlTheme
             Enabled = !p;
             Invalidate();
         }, Token);
-
-        Theme.Register(this, theme => {
-            Loading.Color = theme.ForeColor().DarkenOnLightLerp(0.2f);
-        });
     }
 
     public void NotifyDefault(bool value) => Invalidate();

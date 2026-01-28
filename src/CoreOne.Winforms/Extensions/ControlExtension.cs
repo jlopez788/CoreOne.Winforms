@@ -19,12 +19,6 @@ public static class ControlExtension
         return control;
     }
 
-    public static void ApplyColor(this Control control, ThemeColor color)
-    {
-        control.BackColor = color.BackColor;
-        control.ForeColor = color.ForeColor;
-    }
-
     [return: NotNullIfNotNull(nameof(parent))]
     public static TControl? ClearControls<TControl>(this TControl? parent) where TControl : Control
     {

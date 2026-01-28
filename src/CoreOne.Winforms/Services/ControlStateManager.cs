@@ -1,5 +1,4 @@
 ﻿using CoreOne.Reactive;
-using CoreOne.Reflection;
 using CoreOne.Winforms.Models;
 using System.Drawing.Drawing2D;
 using System.Reflection;
@@ -8,11 +7,13 @@ namespace CoreOne.Winforms.Services;
 
 public class ControlStateManager
 {
+    private readonly Control? Control;
     private readonly Func<Rectangle> GetBoundsFn;
     private readonly bool InvalidateParent;
     private readonly Func<bool> IsEnabledFn;
     private readonly BehaviorSubject<State> SubjectState;
     private readonly SToken Token = SToken.Create();
+    private readonly ToolStripItem? ToolStripItem;
     private ThemeType PTheme;
     public Rectangle Bounds => GetBoundsFn.Invoke();
     public bool IsChecked { get; private set; }
@@ -28,13 +29,13 @@ public class ControlStateManager
     }
     public SToken TransitionToken { get; private set; } = SToken.Create();
     protected Metadata Checked { get; private set; }
+    private Color CBackColor => Control?.BackColor ?? ToolStripItem?.BackColor ?? throw new NullReferenceException("Invalid Control color");
+    private Color CForeColor => Control?.ForeColor ?? ToolStripItem?.ForeColor ?? throw new NullReferenceException("Invalid Control color");
     private bool IsEnabled => IsEnabledFn.Invoke();
 
     public ControlStateManager(Control control, bool invalidateParent = false)
     {
-        EventHandler
-            controlDisposed = default!,
-            handleCreated = default!;
+        EventHandler controlDisposed = default!;
         IsEnabledFn = () => control.Enabled || control.Parent?.Enabled == true;
         GetBoundsFn = () => {
             var bounds = control.Bounds;
@@ -42,7 +43,6 @@ public class ControlStateManager
             return bounds;
         };
         SubjectState = new BehaviorSubject<State>(State.Normal);
-        handleCreated = (sender, e) => Theme.Register((Control?)sender);
         controlDisposed = (sender, e) => {
             Token.Dispose();
             SubjectState.Dispose();
@@ -54,7 +54,6 @@ public class ControlStateManager
             control.MouseUp -= Control_MouseUp;
             control.MouseDown -= Control_MouseDown;
             control.Disposed -= controlDisposed;
-            control.HandleCreated -= handleCreated;
         };
 
         ThemeType = ThemeType.Default;
@@ -67,7 +66,7 @@ public class ControlStateManager
         control.MouseUp += Control_MouseUp;
         control.MouseDown += Control_MouseDown;
         control.Disposed += controlDisposed;
-        control.HandleCreated += handleCreated;
+        Control = control;
 
         InitializeCheckStatus(control);
         InitializeParentPaint();
@@ -86,6 +85,7 @@ public class ControlStateManager
     public ControlStateManager(ToolStripItem item, bool invalidateParent = false)
     {
         EventHandler handler = default!;
+        ToolStripItem = item;
         IsEnabledFn = () => item.Enabled || item.GetCurrentParent()?.Enabled == true;
         GetBoundsFn = () => {
             var bounds = item.Bounds.Copy();
@@ -116,7 +116,7 @@ public class ControlStateManager
 
     public Brush BackBrush(Rectangle viewport, bool buttonLike = false)
     {
-        var color = Theme.Current.BackColor(ThemeType);
+        var color = CBackColor;
         if (buttonLike)
         {
             if (State == State.HLite)
@@ -130,7 +130,7 @@ public class ControlStateManager
 
     public Color BackColor(bool buttonLike = false)
     {
-        var color = Theme.Current.BackColor(ThemeType);
+        var color = CBackColor;
         if (buttonLike)
         {
             if (State == State.HLite)
@@ -143,10 +143,10 @@ public class ControlStateManager
 
     public Color BorderColor(bool usePrimaryOnDefaultTheme = true)
     {
-        var color = Theme.Current.BorderColor(ThemeType);
+        var color = CBackColor;
         if (usePrimaryOnDefaultTheme && ThemeType == ThemeType.Default && (State == State.HLite || IsChecked || IsFocused))
         {
-            color = Theme.Current.BorderColor(ThemeType.Primary);
+            color = CBackColor;
             if (State == State.HLite)
                 color = color.Lighten(0.05f);
         }
@@ -155,7 +155,7 @@ public class ControlStateManager
 
     public Color ForeColor()
     {
-        var foreColor = Theme.Current.ForeColor(ThemeType);
+        var foreColor = CForeColor;
         return IsEnabled ? foreColor : foreColor.DarkenOnLightLerp(0.15f);
     }
 

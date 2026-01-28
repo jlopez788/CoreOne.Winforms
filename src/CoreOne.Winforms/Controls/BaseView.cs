@@ -17,8 +17,6 @@ public class BaseView : Control, IView
         InitializeComponent();
     }
 
-    public void ApplyTheme(Theme theme) => OnApplyTheme(theme);
-
     public void Reload(IReadOnlyList<object>? args = null) => OnReload(args);
 
     public void ShouldDisplay(ref ViewEventArgs e) => OnDisplay(ref e);
@@ -45,10 +43,6 @@ public class BaseView : Control, IView
         }
 
         base.Dispose(disposing);
-    }
-
-    protected virtual void OnApplyTheme(Theme theme)
-    {
     }
 
     protected virtual void OnAsyncRun(Action action) => AsyncRun?.Invoke(action);

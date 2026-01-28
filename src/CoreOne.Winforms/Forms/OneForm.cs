@@ -12,7 +12,7 @@ namespace CoreOne.Winforms.Forms;
 
 [ToolboxItem(false)]
 [SupportedOSPlatform("windows")]
-public class OneForm : Form, ITheme
+public class OneForm : Form
 {
     private sealed class FlickerFreePanel : Control
     {
@@ -79,14 +79,6 @@ public class OneForm : Form, ITheme
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
 
         InitializeComponent();
-
-        Theme.Register(this);
-    }
-
-    public void ApplyTheme(Theme theme)
-    {
-        PAsyncPanel.ApplyColor(theme.Normal);
-        OnApplyTheme(theme);
     }
 
     public void ChangeView(ViewEventArgs e) => OnChangeView(this, e);
@@ -119,10 +111,6 @@ public class OneForm : Form, ITheme
     {
         Token.Dispose();
         base.Dispose(disposing);
-    }
-
-    protected virtual void OnApplyTheme(Theme theme)
-    {
     }
 
     protected virtual void OnChangeView(object sender, ViewEventArgs e) => Controls.OfType<AnimatedPanel>()

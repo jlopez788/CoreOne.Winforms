@@ -352,7 +352,7 @@ public class LoadingCircle : Control
     /// <summary>
     /// Gets the spoke angles.
     /// </summary>
-    /// <param name="_shtNumberSpoke">The number spoke.</param>
+    /// <param name="_intNumberSpoke">The number spoke.</param>
     /// <returns>An array of angle.</returns>
     private static double[] GetSpokesAngles(int _intNumberSpoke)
     {
@@ -392,6 +392,7 @@ public class LoadingCircle : Control
     /// </summary>
     /// <param name="_objColor">Color of the lightest spoke.</param>
     /// <param name="_blnShadeColor">if set to <c>true</c> the color will be shaded on X spoke.</param>
+    /// <param name="_intNbSpoke">The number spoke.</param>
     /// <returns>An array of color used to draw the circle.</returns>
     private Color[] GenerateColorsPallet(Color _objColor, bool _blnShadeColor, int _intNbSpoke)
     {
