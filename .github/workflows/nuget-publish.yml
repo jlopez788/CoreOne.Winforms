@@ -37,7 +37,9 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Package version: $version"
       
-      - shell: pwsh
+      - name: Check if Package Exists on NuGet
+        id: check_nuget
+        shell: pwsh
         run: |
           try {
             $response = Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/${{ matrix.project.name }}/${{ steps.get_version.outputs.version }}/${{ matrix.project.name }}.${{ steps.get_version.outputs.version }}.nupkg" -Method Head -ErrorAction Stop
@@ -46,9 +48,7 @@ jobs:
           } catch {
             echo "exists=false" >> $env:GITHUB_OUTPUT
             Write-Host "Package version ${{ steps.get_version.outputs.version }} does not exist on NuGet.org"
-          }echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Package version ${{ steps.get_version.outputs.version }} does not exist on NuGet.org"
-          fi
+          }
       
       - name: Build Project
         run: dotnet build ${{ matrix.project.path }} --configuration Release
@@ -58,11 +58,11 @@ jobs:
         run: dotnet pack ${{ matrix.project.path }} --configuration Release --no-build
       
       - name: Publish to NuGet
+        if: steps.check_nuget.outputs.exists == 'false'
         shell: pwsh
         run: |
           $projectDir = Split-Path "${{ matrix.project.path }}" -Parent
           dotnet nuget push "$projectDir/bin/Release/*.nupkg" `
             --api-key ${{ secrets.NUGET_KEY }} `
             --source https://api.nuget.org/v3/index.json `
-            --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
