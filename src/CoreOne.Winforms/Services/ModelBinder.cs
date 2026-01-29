@@ -1,4 +1,3 @@
-using CoreOne.Collections;
 using CoreOne.Reactive;
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Events;
@@ -16,7 +15,7 @@ public class ModelBinder(
     IDropdownRefreshManager refreshManager) : Disposable, IModelBinder, IDisposable
 {
     private readonly IPropertyGridItemFactory _gridItemFactory = gridItemFactory ?? throw new ArgumentNullException(nameof(gridItemFactory));
-    private readonly Data<Metadata, PropertyGridItem> _propertyItems = [];
+    private readonly List<PropertyGridItem> GridItems = [];
     private object? _model;
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
 
@@ -32,12 +31,14 @@ public class ModelBinder(
             .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<IgnoreAttribute>() is null)
             .ToList();
 
-        // Create property grid items
-        var gridItems = new List<PropertyGridItem>();
         foreach (var property in properties)
         {
             var gridItem = _gridItemFactory.CreatePropertyGridItem(property, model,
                 value => {
+                    var current = property.GetValue(_model);
+                    if (Equals(current, value))
+                        return;
+
                     UpdateModelProperty(property, value);
 
                     var args = new ModelPropertyChanged(property, _model, value);
@@ -49,13 +50,12 @@ public class ModelBinder(
 
             if (gridItem != null)
             {
-                gridItems.Add(gridItem);
-                _propertyItems[property] = gridItem;
+                GridItems.Add(gridItem);
             }
         }
 
         // Calculate grid layout
-        var itemsWithSpans = gridItems.Select(item => (item.Container as Control, item.ColumnSpan));
+        var itemsWithSpans = GridItems.Select(item => (item.Container as Control, item.ColumnSpan));
         var gridCells = layoutManager.CalculateLayout(itemsWithSpans);
 
         // Render layout
@@ -71,7 +71,7 @@ public class ModelBinder(
 
     public void UnbindModel()
     {
-        _propertyItems.Clear();
+        GridItems.Clear();
         refreshManager.Clear();
         _model = null;
     }

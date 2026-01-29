@@ -1,5 +1,6 @@
 namespace CoreOne.Winforms.Attributes;
 
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public class DropdownSourceAttribute(Type type) : Attribute
 {   /// <summary>
     /// Gets the type that provides the dropdown items

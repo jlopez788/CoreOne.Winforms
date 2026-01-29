@@ -13,17 +13,26 @@ public partial class ModelControl : UserControl
     /// </summary>
     public event EventHandler<ModelSavedEventArgs>? SaveClicked;
     private readonly IModelBinder? ModelBinder;
+    private readonly IServiceProvider Services = default!;
     public OButton BtnSave { get; private set; } = default!;
+    public bool IsDirty { get; private set; }
     public Subject<ModelPropertyChanged>? PropertyChanged => ModelBinder?.PropertyChanged;
 
     public ModelControl()
     {
     }
 
-    public ModelControl(IModelBinder modelBinder)
+    public ModelControl(IServiceProvider services, IModelBinder modelBinder)
     {
-        ModelBinder = modelBinder ?? throw new ArgumentNullException(nameof(modelBinder));
+        Services = services;
+        ModelBinder = modelBinder;
+
         InitializeComponent();
+    }
+
+    public void AcceptChanges()
+    {
+        IsDirty = false;
     }
 
     /// <summary>
@@ -38,7 +47,10 @@ public partial class ModelControl : UserControl
     {
         this.ClearControls();
         var idealSize = ModelBinder?.BindModel(this, model);
+        var token = SToken.Create();
 
+        IsDirty = false;
+        ModelBinder?.PropertyChanged.Subscribe(_ => IsDirty = true, token);
         // Add Save button at the bottom
         if (idealSize.HasValue)
         {
@@ -57,7 +69,13 @@ public partial class ModelControl : UserControl
     {
         var model = ModelBinder?.GetBoundModel();
         if (model is not null)
-            SaveClicked?.Invoke(this, new ModelSavedEventArgs(model));
+        {
+            var validation = model.ValidateModel(Services, true);
+            SaveClicked?.Invoke(this, new ModelSavedEventArgs(model) {
+                IsModified = IsDirty,
+                Validation = validation
+            });
+        }
     }
 
     private void AddSaveButton(Size contentSize)
@@ -79,7 +97,6 @@ public partial class ModelControl : UserControl
 
         Controls.Add(BtnSave);
         BtnSave.BringToFront();
-
         MoveButtons();
     }
 
