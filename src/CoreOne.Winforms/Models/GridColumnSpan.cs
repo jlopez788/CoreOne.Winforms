@@ -30,5 +30,13 @@ public enum GridColumnSpan
     /// <summary>
     /// Default span (6 columns)
     /// </summary>
-    Default = Six
+    Default = Six,
+    /// <summary>
+    /// Helf width (3 columns)
+    /// </summary>
+    Half = Three,
+    /// <summary>
+    /// Full width (6 columns)
+    /// </summary>
+    Full = Six
 }
