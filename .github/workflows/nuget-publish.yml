@@ -1,0 +1,68 @@
+name: Publish NuGet Packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.csproj'
+      - '.github/workflows/nuget-publish.yml'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        project:
+          - name: coreone.drawing
+            path: src/CoreOne.Drawing/CoreOne.Drawing.csproj
+          - name: coreone.winforms
+            path: src/CoreOne.Winforms/CoreOne.Winforms.csproj
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.*'
+      
+      - name: Get Project Version
+        id: get_version
+        shell: pwsh
+        run: |
+          $content = Get-Content "${{ matrix.project.path }}" -Raw
+          $version = [regex]::Match($content, '<Version>(.*?)</Version>').Groups[1].Value
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Package version: $version"
+      
+      - shell: pwsh
+        run: |
+          try {
+            $response = Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/${{ matrix.project.name }}/${{ steps.get_version.outputs.version }}/${{ matrix.project.name }}.${{ steps.get_version.outputs.version }}.nupkg" -Method Head -ErrorAction Stop
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+            Write-Host "Package version ${{ steps.get_version.outputs.version }} already exists on NuGet.org"
+          } catch {
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+            Write-Host "Package version ${{ steps.get_version.outputs.version }} does not exist on NuGet.org"
+          }echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Package version ${{ steps.get_version.outputs.version }} does not exist on NuGet.org"
+          fi
+      
+      - name: Build Project
+        run: dotnet build ${{ matrix.project.path }} --configuration Release
+      
+      - name: Pack NuGet Package
+        if: steps.check_nuget.outputs.exists == 'false'
+        run: dotnet pack ${{ matrix.project.path }} --configuration Release --no-build
+      
+      - name: Publish to NuGet
+        shell: pwsh
+        run: |
+          $projectDir = Split-Path "${{ matrix.project.path }}" -Parent
+          dotnet nuget push "$projectDir/bin/Release/*.nupkg" `
+            --api-key ${{ secrets.NUGET_KEY }} `
+            --source https://api.nuget.org/v3/index.json `
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
