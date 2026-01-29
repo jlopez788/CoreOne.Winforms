@@ -2,9 +2,8 @@
 
 A modern, feature-rich WinForms library that provides **dynamic model-based form generation** with automatic two-way data binding, themed controls, and smooth animations. Built for .NET 9.0 with dependency injection support.
 
-[![NuGet](https://img.shields.io/nuget/v/CoreOne.Winforms)](https://www.nuget.org/packages/CoreOne.Winforms)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+[![NuGet](https://img.shields.io/nuget/v/CoreOne.Winforms.svg)](https://www.nuget.org/packages/CoreOne.Winforms)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ## 🚀 Features
 
 ### Dynamic Form Generation
