@@ -62,7 +62,13 @@ jobs:
         shell: pwsh
         run: |
           $projectDir = Split-Path "${{ matrix.project.path }}" -Parent
-          dotnet nuget push "$projectDir/bin/Release/*.nupkg" `
-            --api-key ${{ secrets.NUGET_KEY }} `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate
+          $nupkgPath = Get-ChildItem -Path "$projectDir/bin/Release" -Filter "*.nupkg" -Recurse | Select-Object -First 1 -ExpandProperty FullName
+          if ($nupkgPath) {
+            dotnet nuget push $nupkgPath `
+              --api-key ${{ secrets.NUGET_KEY }} `
+              --source https://api.nuget.org/v3/index.json `
+              --skip-duplicate
+          } else {
+            Write-Error "No .nupkg file found in $projectDir/bin/Release"
+            exit 1
+          }
