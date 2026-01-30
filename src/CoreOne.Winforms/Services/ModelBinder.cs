@@ -1,7 +1,7 @@
 using CoreOne.Reactive;
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Events;
-using CoreOne.Winforms.Models;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace CoreOne.Winforms.Services;
@@ -9,12 +9,9 @@ namespace CoreOne.Winforms.Services;
 /// <summary>
 /// Manages binding between model properties and controls using a 6-column grid layout
 /// </summary>
-public class ModelBinder(
-    IPropertyGridItemFactory gridItemFactory,
-    IGridLayoutManager layoutManager,
-    IDropdownRefreshManager refreshManager) : Disposable, IModelBinder, IDisposable
+public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
 {
-    private readonly IPropertyGridItemFactory _gridItemFactory = gridItemFactory ?? throw new ArgumentNullException(nameof(gridItemFactory));
+    private readonly IPropertyGridItemFactory _gridItemFactory = services.GetRequiredService<IPropertyGridItemFactory>();
     private readonly List<PropertyGridItem> GridItems = [];
     private object? _model;
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
@@ -50,6 +47,11 @@ public class ModelBinder(
 
             if (gridItem != null)
             {
+                var enabledWatches = property.GetCustomAttributes<EnabledWhenAttribute>();
+                enabledWatches.Each(attr => {
+                    var watch = new EnabledContext(gridItem.InputControl, property, attr);
+                    refreshManager.RegisterContext(watch, _model);
+                });
                 GridItems.Add(gridItem);
             }
         }

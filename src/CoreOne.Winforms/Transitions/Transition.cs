@@ -1,5 +1,4 @@
 ﻿using CoreOne.Reactive;
-using CoreOne.Reflection;
 using CoreOne.Winforms.Transitions.ManagedType;
 using System.ComponentModel;
 using System.Diagnostics;

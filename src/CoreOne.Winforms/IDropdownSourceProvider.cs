@@ -1,5 +1,3 @@
-using CoreOne.Winforms.Models;
-
 namespace CoreOne.Winforms;
 
 /// <summary>
@@ -11,7 +9,7 @@ public interface IDropdownSourceProvider : IDisposable
     /// Initializes the provider with context for rebinding and refreshing
     /// </summary>
     /// <param name="context">Context containing model, parameters, and refresh capabilities</param>
-    void Initialize(IDropdownContext context);
+    void Initialize(DropdownContext context);
 }
 
 /// <summary>

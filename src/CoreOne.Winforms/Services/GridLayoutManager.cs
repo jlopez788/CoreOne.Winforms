@@ -1,5 +1,3 @@
-using CoreOne.Winforms.Models;
-
 namespace CoreOne.Winforms.Services;
 
 public class GridLayoutManager : IGridLayoutManager

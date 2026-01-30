@@ -1,5 +1,4 @@
 using CoreOne.Winforms.Attributes;
-using CoreOne.Winforms.Models;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 

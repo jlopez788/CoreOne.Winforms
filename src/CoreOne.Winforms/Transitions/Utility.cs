@@ -1,4 +1,3 @@
-using CoreOne.Reflection;
 using System.ComponentModel;
 
 namespace CoreOne.Winforms.Transitions;

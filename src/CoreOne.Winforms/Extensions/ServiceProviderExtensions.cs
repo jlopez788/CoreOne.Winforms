@@ -16,7 +16,7 @@ public static class ServiceProviderExtensions
 
         services
             .AddSingleton<FormContainerHostService>()
-            .AddSingleton<IDropdownRefreshManager, DropdownRefreshManager>()
+            .AddSingleton<IRefreshManager, RefreshManager>()
             .AddSingleton<IPropertyGridItemFactory, PropertyGridItemFactory>()
             .AddSingleton<IGridLayoutManager, GridLayoutManager>()
             .AddSingleton<IModelBinder, ModelBinder>();

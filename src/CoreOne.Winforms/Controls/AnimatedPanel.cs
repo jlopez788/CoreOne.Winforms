@@ -1,7 +1,6 @@
 ﻿using CoreOne.Reactive;
 using CoreOne.Winforms.Events;
 using CoreOne.Winforms.Forms;
-using CoreOne.Winforms.Models;
 using CoreOne.Winforms.Services;
 using CoreOne.Winforms.Transitions.Animations;
 

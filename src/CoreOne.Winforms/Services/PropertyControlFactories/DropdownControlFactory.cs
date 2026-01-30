@@ -1,13 +1,17 @@
 using CoreOne.Winforms.Attributes;
-using CoreOne.Winforms.Models;
 
 namespace CoreOne.Winforms.Services.PropertyControlFactories;
 
 /// <summary>
 /// Factory for creating dropdown controls for string properties with DropdownSourceAttribute
 /// </summary>
-public class DropdownControlFactory(IServiceProvider services, IDropdownRefreshManager refreshManager) : IPropertyControlFactory
+public class DropdownControlFactory(IServiceProvider services, IRefreshManager refreshManager) : IPropertyControlFactory
 {
+    /// <summary>
+    /// High priority (100) to ensure attribute-based factories take precedence over generic type-based factories
+    /// </summary>
+    public int Priority => 100;
+
     public bool CanHandle(Metadata property) => property.GetCustomAttribute<DropdownSourceAttribute>() != null;
 
     public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
@@ -23,7 +27,7 @@ public class DropdownControlFactory(IServiceProvider services, IDropdownRefreshM
         };
 
         // Register the dropdown for refresh management
-        refreshManager.RegisterDropdown(context, model);
+        refreshManager.RegisterContext(context, model);
         return (context.ComboBox, UpdateControlValue);
 
         void UpdateControlValue(object? value)
