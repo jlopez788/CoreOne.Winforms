@@ -15,28 +15,17 @@ public class RefreshManager : IRefreshManager
 
     public void NotifyPropertyChanged(object model, string propertyName, object? newValue)
     {
-        if (!DependencyMap.TryGetValue(propertyName, out var dependentProperties))
-            return;
-
-        // Refresh all contexts that depend on this property
-        foreach (var dependentProperty in dependentProperties)
-        {
-            if (Registrations.TryGetValue(dependentProperty, out var context))
-            {
-                context.RequestRefresh(model);
-            }
-        }
+        DependencyMap.Get(propertyName)
+               ?.Select(p => Registrations.TryGetValue(p, out var context) ? context : null)
+               ?.Each(p => p?.RequestRefresh(model));
     }
 
     public void RegisterContext(WatchContext context, object model)
     {
         Registrations.Set(context.Property, context);
-        // Build reverse dependency map (property -> contexts that depend on it)
-        foreach (var dependencyName in context.Dependencies)
-        {
-            DependencyMap.Add(dependencyName, context.Property);
-        }
 
+        // Build reverse dependency map (property -> contexts that depend on it)
+        context.Dependencies.Each(p => DependencyMap.Add(p, context.Property));
         context.RequestRefresh(model);
     }
 }

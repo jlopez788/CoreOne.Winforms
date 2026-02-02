@@ -11,9 +11,9 @@ namespace CoreOne.Winforms.Services;
 /// </summary>
 public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
 {
-    private readonly IPropertyGridItemFactory _gridItemFactory = services.GetRequiredService<IPropertyGridItemFactory>();
+    private readonly IPropertyGridItemFactory ControlFactory = services.GetRequiredService<IPropertyGridItemFactory>();
     private readonly List<PropertyGridItem> GridItems = [];
-    private object? _model;
+    private ModelTransaction? Transaction;
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
 
     public Size BindModel(Control container, object model)
@@ -22,7 +22,8 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
         ArgumentNullException.ThrowIfNull(container);
 
         UnbindModel();
-        _model = model;
+
+        Transaction = new ModelTransaction(model);
 
         var properties = MetaType.GetMetadatas(model.GetType(), BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)
             .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<IgnoreAttribute>() is null)
@@ -30,15 +31,15 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
 
         foreach (var property in properties)
         {
-            var gridItem = _gridItemFactory.CreatePropertyGridItem(property, model,
+            var gridItem = ControlFactory.CreatePropertyGridItem(property, model,
                 value => {
-                    var current = property.GetValue(_model);
+                    var current = property.GetValue(Transaction.Model);
                     if (Equals(current, value))
                         return;
 
                     UpdateModelProperty(property, value);
 
-                    var args = new ModelPropertyChanged(property, _model, value);
+                    var args = new ModelPropertyChanged(property, Transaction.Model, value);
                     PropertyChanged.OnNext(args);
 
                     // Notify dropdown refresh manager
@@ -50,7 +51,7 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
                 var enabledWatches = property.GetCustomAttributes<EnabledWhenAttribute>();
                 enabledWatches.Each(attr => {
                     var watch = new EnabledContext(gridItem.InputControl, property, attr);
-                    refreshManager.RegisterContext(watch, _model);
+                    refreshManager.RegisterContext(watch, Transaction.Model);
                 });
                 GridItems.Add(gridItem);
             }
@@ -69,13 +70,17 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
         return new Size(container.Width, height);
     }
 
-    public object? GetBoundModel() => _model;
+    public void Commit() => Transaction?.Commit();
+
+    public object? GetBoundModel() => Transaction?.Model;
+
+    public void Rollback() => Transaction?.Rollback();
 
     public void UnbindModel()
     {
         GridItems.Clear();
+        Transaction?.Dispose();
         refreshManager.Clear();
-        _model = null;
     }
 
     protected override void OnDispose()
@@ -86,9 +91,9 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
 
     private void UpdateModelProperty(Metadata property, object? value)
     {
-        if (_model == null)
+        if (Transaction?.Model is null)
             return;
 
-        property.SetValue(_model, value);
+        property.SetValue(Transaction.Model, value);
     }
 }

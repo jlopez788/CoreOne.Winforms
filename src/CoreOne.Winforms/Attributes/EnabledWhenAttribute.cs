@@ -9,11 +9,12 @@ namespace CoreOne.Winforms.Attributes;
 /// <param name="expectedValue">The value that enables this control</param>
 /// <param name="comparisonType">The type of comparison to perform</param>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-public sealed class EnabledWhenAttribute(string propertyName, object? expectedValue, ComparisonType comparisonType = ComparisonType.EqualTo) : WatchPropertyAttribute(propertyName)
+public sealed class EnabledWhenAttribute(string propertyName, object? expectedValue, ComparisonType comparisonType = ComparisonType.EqualTo) : WatchPropertiesAttribute(propertyName)
 {
     public ComparisonType ComparisonType { get; } = comparisonType;
     /// <summary>
     /// Gets the expected value for the control to be enabled
     /// </summary>
     public object? ExpectedValue { get; } = expectedValue;
+    public string PropertyName { get; } = propertyName;
 }

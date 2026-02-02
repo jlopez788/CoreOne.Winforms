@@ -17,9 +17,19 @@ public interface IModelBinder
     Size BindModel(Control container, object model);
 
     /// <summary>
+    /// Commits changes made to the bound model
+    /// </summary>
+    void Commit();
+
+    /// <summary>
     /// Gets the currently bound model
     /// </summary>
     object? GetBoundModel();
+
+    /// <summary>
+    /// Rolls back changes made to the bound model
+    /// </summary>
+    void Rollback();
 
     /// <summary>
     /// Unbinds the current model

@@ -15,7 +15,7 @@ public static partial class WindowsApi
        int nXSrc,      // x-coordinate of source upper-left corner
        int nYSrc,      // y-coordinate of source upper-left corner
        int dwRop     // raster operation code
-   );
+    );
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetDC(IntPtr hWnd);

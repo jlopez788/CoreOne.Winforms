@@ -33,12 +33,19 @@ public partial class ModelControl : UserControl
     public void AcceptChanges()
     {
         IsDirty = false;
+        ModelBinder?.Commit();
     }
 
     /// <summary>
     /// Gets the currently bound model
     /// </summary>
     public T? GetModel<T>() where T : class => ModelBinder?.GetBoundModel() as T;
+
+    public void RejectChanges()
+    {
+        IsDirty = false;
+        ModelBinder?.Rollback();
+    }
 
     /// <summary>
     /// Sets the model and generates controls for its properties

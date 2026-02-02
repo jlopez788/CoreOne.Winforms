@@ -13,7 +13,7 @@ A modern, feature-rich WinForms library that provides **dynamic model-based form
 - **Dirty tracking** - Know when data has been modified
 
 ### Smart Grid Layout
-- **6-column Bootstrap-style grid** - Responsive layout system
+- **6-column Bootstrap-style grid**
 - **`[GridColumn]` attribute** - Control field width (1-6 columns)
 - **Auto-sizing** - Calculates ideal form dimensions
 - **Labels above controls** - Clean, modern layout
@@ -30,11 +30,15 @@ A modern, feature-rich WinForms library that provides **dynamic model-based form
 - **LoadingCircle** - Loading indicator control
 - **BaseView** - Base control for creating custom views
 
-### Additional Features
-- **Validation support** - Extensible validation framework
+### Advanced Features
+- **Rating Control** - Star rating control with `[Rating]` attribute for numeric properties
+- **Conditional Enabled** - `[EnabledWhen]` attribute for dynamic control state
+- **Property Watching** - `[WatchProperty]` for reactive property monitoring
+- **Validation support** - Built-in validation with `ValidateModel` extension
+- **Undo/Redo** - `RejectChanges()` and `AcceptChanges()` for change management
 - **Custom attributes** - `[Ignore]`, `[Visible]`, and more
 - **Dependency injection** - First-class DI support
-- **SOLID architecture** - Clean, maintainable codebase
+- **SOLID architecture** - Clean, maintainable codebase with factory priority system
 
 ## 📦 Installation
 
@@ -73,13 +77,19 @@ public class Customer
     public string Country { get; set; }
     
     [DropdownSource<StateProvider>]
-    [DropdownDependsOn(nameof(Country))]  // Refreshes when Country changes
+    [WatchProperty(nameof(Country))]  // Refreshes when Country changes
     [GridColumn(GridColumnSpan.Half)]
     public string State { get; set; }
     
     public DateTime BirthDate { get; set; }
     
     public bool IsActive { get; set; }
+    
+    [EnabledWhen(nameof(IsActive), true)]  // Only enabled when IsActive is true
+    public string ActiveNotes { get; set; }
+    
+    [Rating(5)]  // Display as 5-star rating control
+    public int CustomerRating { get; set; }
     
     [Ignore]  // Won't generate a control
     public int InternalId { get; set; }
@@ -137,14 +147,27 @@ public class MyForm : Form
     {
         if (e.IsModified)
         {
+            // Validation is automatically performed
+            if (!e.IsValid)
+            {
+                MessageBox.Show("Please fix validation errors");
+                return;
+            }
+            
             // Get the updated model
             var customer = _modelControl.GetModel<Customer>();
             
             // Save to database...
             MessageBox.Show($"Saved: {customer?.FirstName} {customer?.LastName}");
             
-            _modelControl.AcceptChanges();  // Clear dirty flag
+            _modelControl.AcceptChanges();  // Commit changes and clear dirty flag
         }
+    }
+    
+    // Optional: Reject changes and revert to original values
+    private void OnCancelClicked(object? sender, EventArgs e)
+    {
+        _modelControl.RejectChanges();  // Rollback all changes
     }
 }
 ```
@@ -226,7 +249,7 @@ public class ProductCategoriesProvider : IDropdownSourceProviderAsync
         _httpClient = httpClient;
     }
     
-    public void Initialize(IDropdownContext context) { }
+    public void Initialize(DropdownContext context) { }
     
     public async Task<IEnumerable<DropdownItem>> GetItemsAsync(object model)
     {
@@ -250,7 +273,9 @@ var token = SToken.Create();
 _modelControl.PropertyChanged?.Subscribe(change =>
 {
     Console.WriteLine($"Property '{change.PropertyName}' changed from " +
-                     $"'{change.OldValue}' to '{change.NewValue}'");
+    WatchProperty("PropertyName")]` | Watch property for changes | `[WatchProperty(nameof(Country))]` |
+| `[EnabledWhen("PropertyName", value)]` | Conditionally enable control | `[EnabledWhen(nameof(IsActive), true)]` |
+| `[Rating(maxRating)]` | Display as star rating control | `[Rating(5
 }, token);
 
 // Later, dispose the token to unsubscribe
@@ -311,7 +336,41 @@ var panel = new AnimatedPanel();
 var loading = new LoadingCircle
 {
     Active = true,
-    Color = Color.Blue
+   
+
+### RatingControl - Star Rating
+
+```csharp
+var rating = new RatingControl
+{
+    MaxRating = 5,
+    Value = 3,RefreshManager`
+- **Factory Pattern** - Composite factory with priority-based control creation
+- **Dependency Injection** - Constructor injection throughout
+- **Reactive Programming** - Observable property changes with `Subject<T>`
+- **Property Watching** - Reactive property monitoring with automatic UI updates
+- **Extensible** - Add custom control factories with priority support
+
+### Factory Priority System
+
+Control factories use a priority system to determine which factory handles a property:
+- **Priority 100+**: Attribute-based factories (`[Rating]`, `[DropdownSource]`)
+- **Priority 0**: Generic type-based factories (String, Numeric, Boolean, DateTime, Enum)
+
+Custom factories can specify their priority:
+```csharp
+public class MyCustomFactory : IPropertyControlFactory
+{
+    public int Priority => 50; // Medium priority
+    // ...
+}
+```
+
+rating.ValueChanged += (s, e) => 
+{
+    Console.WriteLine($"Rating changed to: {rating.Value}");
+};
+``` Color = Color.Blue
 };
 ```
 

@@ -5,16 +5,17 @@ namespace CoreOne.Winforms.Extensions;
 
 public static class ControlExtension
 {
-    public static TControl AddControls<TControl>(this TControl control, IEnumerable<Control>? controls, bool resumeLayout = false) where TControl : Control
+    [return: NotNullIfNotNull(nameof(parent))]
+    public static TControl? AddControls<TControl>(this TControl? parent, IEnumerable<Control>? controls, bool resumeLayout = false) where TControl : Control
     {
         var children = controls?.ToArray();
-        if (children?.Length > 0)
+        if (parent is not null && children?.Length > 0)
         {
-            control.SuspendLayout();
-            control.Controls.AddRange(children);
-            control.ResumeLayout(resumeLayout);
+            parent.SuspendLayout();
+            parent.Controls.AddRange(children);
+            parent.ResumeLayout(resumeLayout);
         }
-        return control;
+        return parent;
     }
 
     [return: NotNullIfNotNull(nameof(parent))]

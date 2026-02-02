@@ -4,16 +4,7 @@ namespace CoreOne.Winforms.Services.PropertyControlFactories;
 
 public class NumericControlFactory : IPropertyControlFactory
 {
-    public bool CanHandle(Metadata property)
-    {
-        var propertyType = property.FPType;
-        var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
-        return Types.IsNumberType(propertyType) ||
-               underlyingType == typeof(int) || underlyingType == typeof(long) ||
-               underlyingType == typeof(short) || underlyingType == typeof(byte) ||
-               underlyingType == typeof(decimal) || underlyingType == typeof(double) ||
-               underlyingType == typeof(float);
-    }
+    public bool CanHandle(Metadata property) => Types.IsNumberType(property.FPType);
 
     public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {

@@ -13,8 +13,8 @@ public class WatchContext
     {
         Property = property;
         Dependencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        Dependencies.AddRange(property.GetCustomAttributes<WatchPropertyAttribute>()
-            .Select(attr => attr.PropertyName));
+        Dependencies.AddRange(property.GetCustomAttributes<WatchPropertiesAttribute>()
+            .SelectMany(attr => attr.PropertyNames));
     }
 
     public void RequestRefresh(object model)
