@@ -9,7 +9,7 @@ public class EnumControlFactory : IPropertyControlFactory
         return underlyingType.IsEnum;
     }
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;

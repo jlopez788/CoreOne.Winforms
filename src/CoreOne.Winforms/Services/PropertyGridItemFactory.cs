@@ -46,8 +46,10 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         };
 
         // Create control - use special method for dropdowns that support refresh
-        var (inputControl, setvalue) = ControlFactory.CreateControl(property, model, onValueChanged);
-        if (inputControl == null)
+        var controlContext = ControlFactory.CreateControl(property, model, onValueChanged);
+        var inputControl = controlContext?.control;
+        var setvalue = controlContext?.setValue;
+        if (inputControl == null || setvalue is null)
             return null;
 
         inputControl.Dock = DockStyle.Top;
@@ -70,7 +72,7 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         var currentValue = property.GetValue(model);
         setvalue?.Invoke(currentValue);
 
-        return new PropertyGridItem {
+        return new PropertyGridItem(inputControl, property, setvalue!) {
             Property = property,
             Label = label,
             InputControl = inputControl,

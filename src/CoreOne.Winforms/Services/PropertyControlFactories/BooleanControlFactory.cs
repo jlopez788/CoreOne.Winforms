@@ -9,7 +9,7 @@ public class BooleanControlFactory : IPropertyControlFactory
         return underlyingType == typeof(bool);
     }
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var checkBox = new CheckBox();
         checkBox.CheckedChanged += (s, e) => onValueChanged(checkBox.Checked);

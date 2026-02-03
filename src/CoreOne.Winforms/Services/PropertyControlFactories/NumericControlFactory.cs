@@ -6,7 +6,7 @@ public class NumericControlFactory : IPropertyControlFactory
 {
     public bool CanHandle(Metadata property) => Types.IsNumberType(property.FPType);
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;

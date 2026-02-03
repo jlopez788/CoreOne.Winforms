@@ -20,12 +20,12 @@ public class RatingControlFactory : IPropertyControlFactory
         return ratingAttr != null && Types.IsNumberType(property.FPType);
     }
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         // Check if property has Rating attribute
         var ratingAttr = property.GetCustomAttribute<RatingAttribute>();
         if (ratingAttr == null || !Types.IsNumberType(property.FPType))
-            return (null, null);
+            return null;
 
         var ratingControl = new RatingControl {
             MaxRating = ratingAttr.MaxRating,
@@ -34,7 +34,6 @@ public class RatingControlFactory : IPropertyControlFactory
         };
 
         ratingControl.ValueChanged += (s, e) => onValueChanged(ratingControl.Value);
-
         return (ratingControl, setValue);
 
         void setValue(object? value)

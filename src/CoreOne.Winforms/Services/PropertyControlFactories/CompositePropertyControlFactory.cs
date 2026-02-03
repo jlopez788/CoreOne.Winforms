@@ -9,12 +9,12 @@ public class CompositePropertyControlFactory(IEnumerable<IPropertyControlFactory
 
     public bool CanHandle(Metadata property) => _orderedFactories.Any(f => f.CanHandle(property));
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         // Try each factory in priority order (highest priority first)
         // This allows specialized factories (like Rating with attributes) to take precedence over generic ones
         return _orderedFactories.Where(f => f.CanHandle(property))
                                  .Select(f => f.CreateControl(property, model, onValueChanged))
-                                 .FirstOrDefault(p => p.control != null);
+                                 .FirstOrDefault(p => p?.control != null);
     }
 }

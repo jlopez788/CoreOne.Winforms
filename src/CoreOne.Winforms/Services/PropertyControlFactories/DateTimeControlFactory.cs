@@ -9,7 +9,7 @@ public class DateTimeControlFactory : IPropertyControlFactory
         return underlyingType == typeof(DateTime);
     }
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var dateTimePicker = new DateTimePicker();
         dateTimePicker.ValueChanged += (s, e) => onValueChanged(dateTimePicker.Value);

@@ -8,7 +8,7 @@ public class StringControlFactory : IPropertyControlFactory
         return propertyType == Types.String;
     }
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var textBox = new TextBox();
         textBox.TextChanged += (s, e) => onValueChanged(textBox.Text);

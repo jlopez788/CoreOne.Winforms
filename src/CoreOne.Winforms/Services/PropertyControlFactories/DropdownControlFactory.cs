@@ -14,11 +14,11 @@ public class DropdownControlFactory(IServiceProvider services, IRefreshManager r
 
     public bool CanHandle(Metadata property) => property.GetCustomAttribute<DropdownSourceAttribute>() != null;
 
-    public (Control? control, Action<object?>? setValue) CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var provider = GetProvider(property);
         if (provider == null)
-            return (null, null);
+            return null;
 
         var context = new DropdownContext(provider, property);
         context.ComboBox.SelectedIndexChanged += (s, e) => {
