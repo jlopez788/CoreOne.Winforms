@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CoreOne.Winforms.Services.PropertyControlFactories;
+namespace CoreOne.Winforms.Services.ControlFactories;
 
-public class NumericControlFactory : IPropertyControlFactory
+public class NumericControlFactory : IControlFactory
 {
     public bool CanHandle(Metadata property) => Types.IsNumberType(property.FPType);
 

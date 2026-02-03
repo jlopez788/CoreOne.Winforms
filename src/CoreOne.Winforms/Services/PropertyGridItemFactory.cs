@@ -9,10 +9,10 @@ namespace CoreOne.Winforms.Services;
 /// </summary>
 public class PropertyGridItemFactory : IPropertyGridItemFactory
 {
-    private readonly IPropertyControlFactory ControlFactory;
+    private readonly IControlFactory ControlFactory;
     private readonly Func<Metadata, string?>[] DisplayAttributes;
 
-    public PropertyGridItemFactory(IPropertyControlFactory controlFactory)
+    public PropertyGridItemFactory(IControlFactory controlFactory)
     {
         ControlFactory = controlFactory ?? throw new ArgumentNullException(nameof(controlFactory));
         DisplayAttributes = [

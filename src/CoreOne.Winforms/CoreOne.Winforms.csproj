@@ -4,7 +4,7 @@
         <TargetFramework>net9.0-windows</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>13</LangVersion>
+        <LangVersion>latest</LangVersion>
         <Version>1.2</Version>
         <UseWindowsForms>true</UseWindowsForms>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>

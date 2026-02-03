@@ -1,12 +1,12 @@
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Controls;
 
-namespace CoreOne.Winforms.Services.PropertyControlFactories;
+namespace CoreOne.Winforms.Services.ControlFactories;
 
 /// <summary>
 /// Factory for creating rating controls for numeric properties with [Rating] attribute
 /// </summary>
-public class RatingControlFactory : IPropertyControlFactory
+public class RatingControlFactory : IControlFactory
 {
     /// <summary>
     /// High priority (100) to ensure attribute-based factories take precedence over generic type-based factories

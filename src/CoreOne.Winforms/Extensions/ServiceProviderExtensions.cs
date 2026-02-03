@@ -1,5 +1,4 @@
 ﻿using CoreOne.Winforms.Services;
-using CoreOne.Winforms.Services.PropertyControlFactories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -7,22 +6,24 @@ namespace CoreOne.Winforms.Extensions;
 
 public static class ServiceProviderExtensions
 {
+    public static IServiceCollection AddControlFactoriesFromTypeAssembly<T>(this IServiceCollection services) where T : class => RegisterWatchContextHandlers<T, IControlFactory>(services);
+
     public static IServiceCollection AddFormServices(this IServiceCollection services)
     {
-        services.TryAddScoped<TargetCreator>();
-
-        // Register all IPropertyControlFactory implementations as singletons
-        RegisterPropertyControlFactories(services);
-
         services
+            .AddControlFactoriesFromTypeAssembly<IControlFactory>()
+            .AddWatchHandlersFromTypeAssembly<IWatchFactory>()
             .AddSingleton<FormContainerHostService>()
             .AddSingleton<IRefreshManager, RefreshManager>()
             .AddSingleton<IPropertyGridItemFactory, PropertyGridItemFactory>()
             .AddSingleton<IGridLayoutManager, GridLayoutManager>()
-            .AddSingleton<IModelBinder, ModelBinder>();
+            .AddSingleton<IModelBinder, ModelBinder>()
+            .TryAddScoped<TargetCreator>();
 
         return services;
     }
+
+    public static IServiceCollection AddWatchHandlersFromTypeAssembly<T>(this IServiceCollection services) where T : class => RegisterWatchContextHandlers<T, IWatchFactory>(services);
 
     public static TargetCreator GetTargetCreator(this IServiceProvider? services)
     {
@@ -30,22 +31,15 @@ public static class ServiceProviderExtensions
         return instance ?? new TargetCreator(services);
     }
 
-    private static void RegisterPropertyControlFactories(IServiceCollection services)
+    private static IServiceCollection RegisterWatchContextHandlers<TAssembly, TFilter>(IServiceCollection services) where TAssembly : class
     {
-        var assembly = typeof(IPropertyControlFactory).Assembly;
-        var factoryType = typeof(IPropertyControlFactory);
-        var composite = typeof(CompositePropertyControlFactory);
-        var factoryTypes = assembly.GetTypes()
-           .Where(t => t.IsClass && !t.IsAbstract && factoryType.IsAssignableFrom(t) && t != composite)
+        var assembly = typeof(TAssembly).Assembly;
+        var handlerType = typeof(TFilter);
+        var handlerTypes = assembly.GetTypes()
+           .Where(t => t.IsClass && !t.IsAbstract && handlerType.IsAssignableFrom(t))
            .ToList();
 
-        // Register each factory by its concrete type
-        factoryTypes.Each(p => services.AddSingleton(p));
-
-        // Register CompositePropertyControlFactory, resolving concrete types to avoid circular dependency
-        services.AddSingleton<IPropertyControlFactory>(sp => {
-            var factories = factoryTypes.SelectList(t => (IPropertyControlFactory)sp.GetRequiredService(t));
-            return new CompositePropertyControlFactory(factories);
-        });
+        handlerTypes.Each(p => services.AddSingleton(handlerType, p));
+        return services;
     }
 }

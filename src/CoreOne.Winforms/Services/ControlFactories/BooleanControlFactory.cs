@@ -1,6 +1,6 @@
-namespace CoreOne.Winforms.Services.PropertyControlFactories;
+namespace CoreOne.Winforms.Services.ControlFactories;
 
-public class BooleanControlFactory : IPropertyControlFactory
+public class BooleanControlFactory : IControlFactory
 {
     public bool CanHandle(Metadata property)
     {

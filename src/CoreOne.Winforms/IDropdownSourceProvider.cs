@@ -8,8 +8,8 @@ public interface IDropdownSourceProvider : IDisposable
     /// <summary>
     /// Initializes the provider with context for rebinding and refreshing
     /// </summary>
-    /// <param name="context">Context containing model, parameters, and refresh capabilities</param>
-    void Initialize(DropdownContext context);
+    /// <param name="handler">Handler</param>
+    void Initialize(IWatchHandler handler);
 }
 
 /// <summary>

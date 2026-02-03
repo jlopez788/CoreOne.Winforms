@@ -6,5 +6,5 @@ public interface IRefreshManager
 
     void NotifyPropertyChanged(object model, string propertyName, object? newValue);
 
-    void RegisterContext(WatchContext context, object model);
+    void RegisterContext(IWatchHandler handler, object model);
 }

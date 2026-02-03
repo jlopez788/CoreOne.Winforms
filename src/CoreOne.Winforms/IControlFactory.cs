@@ -3,7 +3,7 @@ namespace CoreOne.Winforms;
 /// <summary>
 /// Factory interface for creating controls based on property types
 /// </summary>
-public interface IPropertyControlFactory
+public interface IControlFactory
 {
     /// <summary>
     /// Gets the priority of this factory. Higher priority factories are checked first.

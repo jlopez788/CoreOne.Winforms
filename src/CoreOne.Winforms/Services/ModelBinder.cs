@@ -11,8 +11,9 @@ namespace CoreOne.Winforms.Services;
 /// </summary>
 public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
 {
-    private readonly IPropertyGridItemFactory ControlFactory = services.GetRequiredService<IPropertyGridItemFactory>();
+    private readonly List<IControlFactory> Factories = services.GetRequiredService<List<IControlFactory>>();
     private readonly List<PropertyGridItem> GridItems = [];
+    private readonly List<IWatchFactory> Handlers = services.GetRequiredService<List<IWatchFactory>>();
     private ModelTransaction? Transaction;
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
 
@@ -25,34 +26,40 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
 
         Transaction = new ModelTransaction(model);
 
+        var factories = Factories.OrderByDescending(f => f.Priority).ToList();
         var properties = MetaType.GetMetadatas(model.GetType(), BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)
             .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<IgnoreAttribute>() is null)
             .ToList();
-
+        var handlers = Handlers.OrderByDescending(p => p.Priority).ToList();
         foreach (var property in properties)
         {
-            var gridItem = ControlFactory.CreatePropertyGridItem(property, model,
-                value => {
-                    var current = property.GetValue(Transaction.Model);
-                    if (Equals(current, value))
-                        return;
+            var controlFactory = factories.FirstOrDefault(p => p.CanHandle(property));
+            if (controlFactory is null)
+                continue;
 
-                    UpdateModelProperty(property, value);
+            var factory = new PropertyGridItemFactory(controlFactory);
+            var gridItem = factory.CreatePropertyGridItem(property, model, value => {
+                var current = property.GetValue(Transaction.Model);
+                if (Equals(current, value))
+                    return;
 
-                    var args = new ModelPropertyChanged(property, Transaction.Model, value);
-                    PropertyChanged.OnNext(args);
+                UpdateModelProperty(property, value);
 
-                    // Notify dropdown refresh manager
-                    refreshManager.NotifyPropertyChanged(model, property.Name, value);
-                });
+                var args = new ModelPropertyChanged(property, Transaction.Model, value);
+                PropertyChanged.OnNext(args);
+
+                // Notify dropdown refresh manager
+                refreshManager.NotifyPropertyChanged(model, property.Name, value);
+            });
 
             if (gridItem != null)
             {
-                var enabledWatches = property.GetCustomAttributes<EnabledWhenAttribute>();
-                enabledWatches.Each(attr => {
-                    var watch = new EnabledContext(gridItem.InputControl, property, attr);
-                    refreshManager.RegisterContext(watch, Transaction.Model);
-                });
+                handlers
+                    .OrderByDescending(p => p.Priority)
+                    .Select(p => p.CreateInstance(gridItem))
+                    .ExcludeNulls()
+                    .Each(p => refreshManager.RegisterContext(p, model));
+
                 GridItems.Add(gridItem);
             }
         }

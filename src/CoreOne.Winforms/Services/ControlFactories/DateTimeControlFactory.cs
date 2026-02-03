@@ -1,6 +1,6 @@
-namespace CoreOne.Winforms.Services.PropertyControlFactories;
+namespace CoreOne.Winforms.Services.ControlFactories;
 
-public class DateTimeControlFactory : IPropertyControlFactory
+public class DateTimeControlFactory : IControlFactory
 {
     public bool CanHandle(Metadata property)
     {
