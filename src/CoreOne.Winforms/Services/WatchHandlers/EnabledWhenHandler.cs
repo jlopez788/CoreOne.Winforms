@@ -4,8 +4,29 @@ using CoreOne.Winforms.Attributes;
 namespace CoreOne.Winforms.Services.WatchHandlers;
 
 /// <summary>
-/// Handler for EnabledWhen attributes that controls control enabled state based on property values
+/// Watch handler that conditionally enables or disables controls based on property values.
+/// Supports complex conditional logic with comparison operators (EqualTo, NotEqualTo, GreaterThan, etc.).
 /// </summary>
+/// <remarks>
+/// <para>Multiple [EnabledWhen] attributes on the same property are combined with AND logic.</para>
+/// <para>The control is enabled only when ALL conditions are satisfied.</para>
+/// </remarks>
+/// <example>
+/// <code>
+/// // Enable only when IsActive is true
+/// [EnabledWhen(nameof(IsActive), true)]
+/// public string Notes { get; set; }
+///
+/// // Enable only when Age is greater than or equal to 18
+/// [EnabledWhen(nameof(Age), 18, ComparisonType.GreaterThanOrEqualTo)]
+/// public bool CanVote { get; set; }
+///
+/// // Multiple conditions (both must be true)
+/// [EnabledWhen(nameof(IsActive), true)]
+/// [EnabledWhen(nameof(Role), "Admin")]
+/// public string AdminNotes { get; set; }
+/// </code>
+/// </example>
 public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute>, IWatchFactory
 {
     private class EnabledWhenHandlerInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes) : WatchHandler(gridItem.Property)
@@ -25,8 +46,6 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
         protected override void OnRefresh(object model)
         {
             PropertyGridItem.InputControl.CrossThread(() => {
-                var value = Property.GetValue(model);
-
                 // All conditions must be satisfied (AND logic)
                 var isEnabled = true;
                 foreach (var attr in EnabledAttributes)
@@ -35,7 +54,7 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
                         continue;
 
                     var targetValue = targetProperty.GetValue(model);
-                    var conditionMet = EvaluateCondition(value, targetValue, attr.ComparisonType);
+                    var conditionMet = EvaluateCondition(targetValue, attr.ExpectedValue, attr.ComparisonType);
 
                     if (!conditionMet)
                     {
@@ -56,7 +75,11 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
 
             if (sourceValue is not null && !typeof(IComparable).IsAssignableFrom(sourceValue.GetType()))
             {
-                throw new ArgumentException($"Source value of type {sourceValue.GetType()} has not implemented IComparable interface");
+                var typeName = sourceValue.GetType().Name;
+                throw new ArgumentException(
+                    $"Source value of type '{typeName}' does not implement IComparable interface. " +
+                    $"Comparison operations require IComparable. Consider using ComparisonType.EqualTo/NotEqualTo " +
+                    $"with types that implement IEquatable<T>, or implement IComparable on '{typeName}'.");
             }
 
             return comparisonType switch {
@@ -68,7 +91,9 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
                                           (!isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) == 0),
                 ComparisonType.GreaterThan => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) > 0,
                 ComparisonType.GreaterThanOrEqualTo => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) >= 0,
-                _ => throw new InvalidOperationException($"Unsupported comparison type: {comparisonType}"),
+                _ => throw new InvalidOperationException(
+                    $"Unsupported comparison type '{comparisonType}'. " +
+                    $"Supported types: EqualTo, NotEqualTo, GreaterThan, LessThan, GreaterThanOrEqualTo, LessThanOrEqualTo."),
             };
         }
     }
