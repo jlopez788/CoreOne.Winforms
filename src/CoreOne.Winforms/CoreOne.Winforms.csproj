@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-        <Version>1.2</Version>
+        <Version>1.3</Version>
         <UseWindowsForms>true</UseWindowsForms>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Title>CoreOne.Winforms</Title>

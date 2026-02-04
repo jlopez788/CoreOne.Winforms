@@ -9,15 +9,11 @@ public class BooleanControlFactory : IControlFactory
         return underlyingType == typeof(bool);
     }
 
-    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var checkBox = new CheckBox();
-        checkBox.CheckedChanged += (s, e) => onValueChanged(checkBox.Checked);
-        return (checkBox, UpdateControlValue);
-
-        void UpdateControlValue(object? value)
-        {
-            checkBox.Checked = value is bool flag && flag;
-        }
+        return new(checkBox,
+            value => checkBox.Checked = value is bool flag && flag,
+            () => checkBox.CheckedChanged += (s, e) => onValueChanged(checkBox.Checked));
     }
 }

@@ -20,7 +20,7 @@ public class RatingControlFactory : IControlFactory
         return ratingAttr != null && Types.IsNumberType(property.FPType);
     }
 
-    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         // Check if property has Rating attribute
         var ratingAttr = property.GetCustomAttribute<RatingAttribute>();
@@ -33,12 +33,8 @@ public class RatingControlFactory : IControlFactory
             Anchor = AnchorStyles.Left | AnchorStyles.Right
         };
 
-        ratingControl.ValueChanged += (s, e) => onValueChanged(ratingControl.Value);
-        return (ratingControl, setValue);
-
-        void setValue(object? value)
-        {
-            ratingControl.Value = Types.TryParse<int>(value?.ToString(), out var rating) ? rating : 0;
-        }
+        return new(ratingControl,
+            value => ratingControl.Value = Types.TryParse<int>(value?.ToString(), out var rating) ? rating : 0,
+            () => ratingControl.ValueChanged += (s, e) => onValueChanged(ratingControl.Value));
     }
 }

@@ -11,9 +11,9 @@ namespace CoreOne.Winforms.Services;
 /// </summary>
 public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
 {
-    private readonly List<IControlFactory> Factories = services.GetRequiredService<List<IControlFactory>>();
+    private readonly List<IControlFactory> Factories = [.. services.GetRequiredService<IEnumerable<IControlFactory>>()];
     private readonly List<PropertyGridItem> GridItems = [];
-    private readonly List<IWatchFactory> Handlers = services.GetRequiredService<List<IWatchFactory>>();
+    private readonly List<IWatchFactory> Handlers = [.. services.GetRequiredService<IEnumerable<IWatchFactory>>()];
     private ModelTransaction? Transaction;
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
 
@@ -86,8 +86,9 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
     public void UnbindModel()
     {
         GridItems.Clear();
-        Transaction?.Dispose();
         refreshManager.Clear();
+        Transaction?.Dispose();
+        Transaction = null;
     }
 
     protected override void OnDispose()

@@ -9,15 +9,11 @@ public class DateTimeControlFactory : IControlFactory
         return underlyingType == typeof(DateTime);
     }
 
-    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var dateTimePicker = new DateTimePicker();
-        dateTimePicker.ValueChanged += (s, e) => onValueChanged(dateTimePicker.Value);
-        return (dateTimePicker, UpdateControlValue);
-
-        void UpdateControlValue(object? value)
-        {
-            dateTimePicker.Value = (DateTime)(value ?? DateTime.Now);
-        }
+        return new(dateTimePicker,
+            value => dateTimePicker.Value = (DateTime)(value ?? DateTime.Now),
+            () => dateTimePicker.ValueChanged += (s, e) => onValueChanged(dateTimePicker.Value));
     }
 }

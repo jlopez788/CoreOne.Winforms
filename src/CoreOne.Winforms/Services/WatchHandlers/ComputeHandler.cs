@@ -17,12 +17,13 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
 
         protected override void OnInitialize(object model)
         {
-            var method = Property.FPType?.DeclaringType?.GetMethod(attribute.MethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
+            var modelType = model.GetType();
+            var method = modelType.GetMethod(attribute.MethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
             if (method is null)
                 return;
 
             var parameters = method.GetParameters();
-            var modelType = model.GetType();
+
             var properties = MetaType.GetMetadatas(modelType).ToDictionary();
 
             _invokeCallback = MetaType.GetInvokeMethod(method);
@@ -37,10 +38,12 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
                     {
                         _parameterGetters.Add(m => m);
                     }
-                    else if (!string.IsNullOrEmpty(parameter.Name) &&
-                             properties.TryGetValue(parameter.Name, out var meta))
+                    else if (!string.IsNullOrEmpty(parameter.Name) && properties.TryGetValue(parameter.Name, out var meta))
                     {
-                        _parameterGetters.Add(m => meta.GetValue(m!));
+                        _parameterGetters.Add(m => {
+                            var value = m is null ? parameter.ParameterType.GetDefault() : meta.GetValue(m);
+                            return Convert.ChangeType(value, parameter.ParameterType);
+                        });
                     }
                 }
             }
@@ -56,7 +59,9 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
 
             if (_hasResult)
             {
-                Property.SetValue(model, result);
+                result = Convert.ChangeType(result, Property.FPType);
+                var flag = Property.SetValue(model, result);
+                Property.Setter?.Invoke(model, result);
                 gridItem.SetValue?.Invoke(result);
             }
         }

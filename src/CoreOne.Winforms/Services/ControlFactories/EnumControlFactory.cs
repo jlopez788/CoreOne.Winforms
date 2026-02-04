@@ -9,22 +9,21 @@ public class EnumControlFactory : DropdownControlFactory, IControlFactory
         return underlyingType.IsEnum;
     }
 
-    protected override (ComboBox control, Action<object?> setValue)? OnCreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    protected override ControlContext? OnCreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var result = base.OnCreateControl(property, model, onValueChanged);
         if (result is null)
             return null;
 
-        var combo = result.Value.control;
+        var combo = (ComboBox)result.Control;
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         combo.Items.AddRange([.. Enum.GetValues(underlyingType).Cast<object>()]);
-        return (control: combo, setValue: value => {
+        return new(combo, value => {
             if (value != null)
             {
                 combo.SelectedItem = value;
             }
-        }
-        );
+        }, result.BindEvent);
     }
 }

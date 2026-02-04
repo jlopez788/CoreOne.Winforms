@@ -19,5 +19,5 @@ public interface IControlFactory
     /// <summary>
     /// Creates an appropriate control for the given property
     /// </summary>
-    (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged);
+    ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged);
 }

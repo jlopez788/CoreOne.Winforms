@@ -6,7 +6,7 @@ public class NumericControlFactory : IControlFactory
 {
     public bool CanHandle(Metadata property) => Types.IsNumberType(property.FPType);
 
-    public (Control control, Action<object?> setValue)? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
@@ -43,35 +43,20 @@ public class NumericControlFactory : IControlFactory
             numericUpDown.Increment = 1;
         }
 
-        numericUpDown.ValueChanged += (s, e) => {
-            object? convertedValue = underlyingType switch {
-                Type t when t == typeof(int) => (int)numericUpDown.Value,
-                Type t when t == typeof(long) => (long)numericUpDown.Value,
-                Type t when t == typeof(short) => (short)numericUpDown.Value,
-                Type t when t == typeof(byte) => (byte)numericUpDown.Value,
-                Type t when t == typeof(decimal) => numericUpDown.Value,
-                Type t when t == typeof(double) => (double)numericUpDown.Value,
-                Type t when t == typeof(float) => (float)numericUpDown.Value,
-                _ => null
-            };
-            onValueChanged(convertedValue);
-        };
-
-        return (numericUpDown, UpdateControlValue);
-
-        void UpdateControlValue(object? value)
-        {
-            if (value != null)
-            {
-                try
-                {
-                    numericUpDown.Value = Convert.ToDecimal(value);
-                }
-                catch
-                {
-                    // Ignore conversion errors
-                }
-            }
-        }
+        return new(numericUpDown,
+            value => Utility.Try(() => numericUpDown.Value = Convert.ToDecimal(value)),
+            () => numericUpDown.ValueChanged += (s, e) => {
+                object? convertedValue = underlyingType switch {
+                    Type t when t == typeof(int) => (int)numericUpDown.Value,
+                    Type t when t == typeof(long) => (long)numericUpDown.Value,
+                    Type t when t == typeof(short) => (short)numericUpDown.Value,
+                    Type t when t == typeof(byte) => (byte)numericUpDown.Value,
+                    Type t when t == typeof(decimal) => numericUpDown.Value,
+                    Type t when t == typeof(double) => (double)numericUpDown.Value,
+                    Type t when t == typeof(float) => (float)numericUpDown.Value,
+                    _ => null
+                };
+                onValueChanged(convertedValue);
+            });
     }
 }
