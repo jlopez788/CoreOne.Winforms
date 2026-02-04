@@ -262,9 +262,7 @@ public class ModelBinderTests
 
         // Register control factories
         services.AddSingleton<IControlFactory>(new TestStringControlFactory());
-        services.AddSingleton<IControlFactory>(new TestNumericControlFactory());
-
-        // Register watch factories (empty for basic tests)
+        services.AddSingleton<IControlFactory>(new TestNumericControlFactory()); 
         services.AddSingleton<IEnumerable<IWatchFactory>>(new List<IWatchFactory>());
 
         _serviceProvider = services.BuildServiceProvider();
@@ -312,6 +310,88 @@ public class ModelBinderTests
 
         var boundModel = _binder.GetBoundModel();
         Assert.That(boundModel, Is.Null);
+    }
+
+    [Test]
+    public void Commit_WithoutBoundModel_DoesNotThrow()
+    {
+        // Commit on unbound ModelBinder should not throw
+        Assert.DoesNotThrow(() => _binder.Commit());
+    }
+
+    [Test]
+    public void Rollback_WithoutBoundModel_DoesNotThrow()
+    {
+        // Rollback on unbound ModelBinder should not throw
+        Assert.DoesNotThrow(() => _binder.Rollback());
+    }
+
+    [Test]
+    public void GetBoundModel_WithoutBinding_ReturnsNull()
+    {
+        var result = _binder.GetBoundModel();
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void BindModel_WithPropertyWithoutFactory_SkipsProperty()
+    {
+        // Model with property type that no factory can handle
+        var model = new TestModelWithUnsupportedType { UnsupportedProperty = DateTime.Now };
+        var container = new Panel();
+
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+            .Returns(new List<GridCell>());
+        _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
+            .Returns((new TableLayoutPanel(), 100));
+
+        // Should not throw, just skip the unsupported property
+        Assert.DoesNotThrow(() => _binder.BindModel(container, model));
+    }
+
+    [Test]
+    public void Commit_WithBoundModel_CommitsTransaction()
+    {
+        var model = new TestModel { Name = "Initial", Age = 25 };
+        var container = new Panel();
+
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+            .Returns(new List<GridCell>());
+        _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
+            .Returns((new TableLayoutPanel(), 100));
+
+        _binder.BindModel(container, model);
+
+        // Modify the model
+        model.Name = "Modified";
+
+        // Commit should succeed without throwing
+        Assert.DoesNotThrow(() => _binder.Commit());
+    }
+
+    [Test]
+    public void Rollback_WithBoundModel_RollsBackTransaction()
+    {
+        var model = new TestModel { Name = "Initial", Age = 25 };
+        var container = new Panel();
+
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+            .Returns(new List<GridCell>());
+        _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
+            .Returns((new TableLayoutPanel(), 100));
+
+        _binder.BindModel(container, model);
+
+        // Modify the model
+        model.Name = "Modified";
+
+        // Rollback should succeed without throwing
+        Assert.DoesNotThrow(() => _binder.Rollback());
+    }
+
+    private class TestModelWithUnsupportedType
+    {
+        public DateTime UnsupportedProperty { get; set; }
     }
 
     private static T? FindControlOfType<T>(ModelBinder modelBinder, string name) where T : Control
