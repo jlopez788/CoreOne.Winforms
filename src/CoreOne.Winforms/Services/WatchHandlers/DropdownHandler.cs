@@ -10,7 +10,7 @@ public class DropdownHandler(IServiceProvider services) : WatchFactoryFromAttrib
 
         protected override void OnInitialize(object model) => provider.Initialize(this);
 
-        protected override void OnRefresh(object model) => _ = RefreshItemsAsync(model);
+        protected override void OnRefresh(object model, bool isFirst) => _ = RefreshItemsAsync(model);
 
         private void RefreshItems(IEnumerable<DropdownItem> items)
         {
@@ -28,14 +28,14 @@ public class DropdownHandler(IServiceProvider services) : WatchFactoryFromAttrib
 
         private async Task RefreshItemsAsync(object model)
         {
-            if (provider is IDropdownSourceProviderAsync asyncProvider)
-            {
-                var items = await asyncProvider.GetItemsAsync(model);
-                RefreshItems(items);
-            }
-            else if (provider is IDropdownSourceProviderSync syncProvider)
+            if (provider is IDropdownSourceProviderSync syncProvider)
             {
                 var items = syncProvider.GetItems(model);
+                RefreshItems(items);
+            }
+            else if (provider is IDropdownSourceProviderAsync asyncProvider)
+            {
+                var items = await asyncProvider.GetItemsAsync(model);
                 RefreshItems(items);
             }
         }

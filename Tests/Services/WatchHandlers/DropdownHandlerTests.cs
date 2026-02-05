@@ -335,8 +335,10 @@ public class DropdownHandlerTests
 
     private static PropertyGridItem CreatePropertyGridItem(Type type, string propertyName, Control control, object model)
     {
-        var propInfo = type.GetProperty(propertyName)!;
-        var metadata = new Metadata(propInfo, propInfo.PropertyType, null, null);
-        return new PropertyGridItem(control, metadata, value => metadata.SetValue(model, value));
+        var metadata = CreateMetadata(type, propertyName);
+        var controlContext = new ControlContext(control, "", p => metadata.SetValue(model, p), () => { });
+        return new PropertyGridItem(controlContext, metadata, value => metadata.SetValue(model, value));
     }
+
+    private static Metadata CreateMetadata(Type type, string propertyName) => MetaType.GetMetadata(type, propertyName);
 }

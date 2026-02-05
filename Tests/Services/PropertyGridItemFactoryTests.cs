@@ -1,12 +1,11 @@
+using CoreOne.Reflection;
 using CoreOne.Winforms;
-using CoreOne.Winforms.Services;
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Models;
-using CoreOne.Reflection;
-using System.Windows.Forms;
+using CoreOne.Winforms.Services;
+using Moq;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Moq;
 
 namespace Tests.Services;
 
@@ -19,13 +18,7 @@ public class PropertyGridItemFactoryTests
     public void Setup()
     {
         _mockControlFactory = new Mock<IControlFactory>();
-        _factory = new PropertyGridItemFactory(_mockControlFactory.Object);
-    }
-
-    [Test]
-    public void Constructor_WithNullControlFactory_ThrowsArgumentNullException()
-    {
-        Assert.Throws<ArgumentNullException>(() => new PropertyGridItemFactory(null!));
+        _factory = new PropertyGridItemFactory();
     }
 
     [Test]
@@ -37,9 +30,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem, Is.Not.Null);
         Assert.That(gridItem!.InputControl, Is.SameAs(textBox));
@@ -55,7 +48,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(false);
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem, Is.Null);
     }
@@ -66,7 +59,7 @@ public class PropertyGridItemFactoryTests
         var property = CreateMetadata(typeof(TestModel), nameof(TestModel.Name));
 
         Assert.Throws<ArgumentNullException>(() =>
-            _factory.CreatePropertyGridItem(property, null!, _ => { }));
+            _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, null!, _ => { }));
     }
 
     [Test]
@@ -76,7 +69,7 @@ public class PropertyGridItemFactoryTests
         var property = CreateMetadata(typeof(TestModel), nameof(TestModel.Name));
 
         Assert.Throws<ArgumentNullException>(() =>
-            _factory.CreatePropertyGridItem(property, model, null!));
+            _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, null!));
     }
 
     [Test]
@@ -88,9 +81,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Label.Text, Is.EqualTo("First Name"));
     }
@@ -104,9 +97,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Label.Text, Is.EqualTo("Last Name"));
     }
@@ -120,9 +113,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Label.Text, Is.EqualTo("Email"));
     }
@@ -136,9 +129,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Label.Text, Is.EqualTo("Phone Number"));
     }
@@ -152,9 +145,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.ColumnSpan, Is.EqualTo(GridColumnSpan.Full));
     }
@@ -168,9 +161,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, () => { }));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.ColumnSpan, Is.EqualTo(GridColumnSpan.None));
     }
@@ -186,12 +179,12 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, value => {
+            .Returns(new ControlContext(textBox, "TextChanged", value => {
                 setValueCalled = true;
                 capturedValue = value;
             }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(setValueCalled, Is.True);
         Assert.That(capturedValue, Is.EqualTo("InitialValue"));
@@ -206,9 +199,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, null));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.InputControl.Dock, Is.EqualTo(DockStyle.Top));
         Assert.That(gridItem.InputControl.Height, Is.EqualTo(23));
@@ -223,9 +216,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, null));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Label.AutoSize, Is.True);
         Assert.That(gridItem.Label.Dock, Is.EqualTo(DockStyle.Top));
@@ -241,9 +234,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, null));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Container.Dock, Is.EqualTo(DockStyle.Fill));
         Assert.That(gridItem.Container.AutoSize, Is.True);
@@ -259,9 +252,9 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, _ => { }, null));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem!.Container.Controls.Count, Is.EqualTo(2));
         Assert.That(gridItem.Container.Controls.Contains(gridItem.InputControl), Is.True);
@@ -278,7 +271,7 @@ public class PropertyGridItemFactoryTests
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
             .Returns((ControlContext?)null);
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(gridItem, Is.Null);
     }
@@ -294,9 +287,9 @@ public class PropertyGridItemFactoryTests
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
             .Callback<Metadata, object, Action<object?>>((p, m, cb) => capturedCallback = cb)
-            .Returns(new ControlContext(textBox, _ => { }, null));
+            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
-        var gridItem = _factory.CreatePropertyGridItem(property, model, _ => { });
+        var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
         Assert.That(capturedCallback, Is.Not.Null);
     }

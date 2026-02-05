@@ -13,7 +13,8 @@ public class DateTimeControlFactory : IControlFactory
     {
         var dateTimePicker = new DateTimePicker();
         return new(dateTimePicker,
+            nameof(dateTimePicker.ValueChanged),
             value => dateTimePicker.Value = (DateTime)(value ?? DateTime.Now),
-            () => dateTimePicker.ValueChanged += (s, e) => onValueChanged(dateTimePicker.Value));
+            () => onValueChanged(dateTimePicker.Value));
     }
 }

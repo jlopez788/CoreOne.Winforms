@@ -1,18 +1,17 @@
+using CoreOne.Winforms;
 using CoreOne.Winforms.Extensions;
 using Microsoft.Extensions.DependencyInjection;
-using SimpleFormExample.Models;
 using SimpleFormExample.Providers;
-using System.Windows.Forms;
 
 namespace SimpleFormExample;
 
-static class Program
+public static class Program
 {
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
     [STAThread]
-    static void Main()
+    private static void Main()
     {
         ApplicationConfiguration.Initialize();
 
@@ -30,7 +29,6 @@ static class Program
         var serviceProvider = services.BuildServiceProvider();
 
         // Create and run main form
-        var mainForm = new MainForm(serviceProvider);
-        Application.Run(mainForm);
+        Startup.Run<MainForm>(serviceProvider);
     }
 }

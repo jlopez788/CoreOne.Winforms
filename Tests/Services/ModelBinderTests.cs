@@ -38,8 +38,9 @@ public class ModelBinderTests
             var numericUpDown = new NumericUpDown();
             numericUpDown.Name = property.Name;
             return new ControlContext(numericUpDown,
+                "ValueChanged",
                 value => numericUpDown.Value = value is int i ? i : 0,
-                () => numericUpDown.ValueChanged += (s, e) => onValueChanged((int)numericUpDown.Value));
+                () => onValueChanged((int)numericUpDown.Value));
         }
     }
 
@@ -56,8 +57,9 @@ public class ModelBinderTests
             textBox.Name = property.Name;
 
             return new ControlContext(textBox,
+                "TextChanged",
                 value => textBox.Text = value?.ToString() ?? "",
-                () => textBox.TextChanged += (s, e) => onValueChanged(textBox.Text));
+                () => onValueChanged(textBox.Text));
         }
     }
 
@@ -72,14 +74,14 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 150));
 
         _binder.BindModel(container, model);
 
-        _mockLayoutManager.Verify(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()), Times.Once);
+        _mockLayoutManager.Verify(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()), Times.Once);
         _mockLayoutManager.Verify(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()), Times.Once);
     }
 
@@ -90,7 +92,7 @@ public class ModelBinderTests
         var container = new Panel();
 
         var capturedSpans = new List<(Control?, GridColumnSpan)>();
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Callback<IEnumerable<(Control?, GridColumnSpan)>>(spans => capturedSpans.AddRange(spans))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
@@ -109,7 +111,7 @@ public class ModelBinderTests
         var model2 = new TestModel { Name = "Second" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -134,6 +136,7 @@ public class ModelBinderTests
         var services = new ServiceCollection();
         services.AddSingleton<IControlFactory>(new TestStringControlFactory());
         services.AddSingleton<IWatchFactory>(mockWatchFactory.Object);
+        services.AddSingleton<IPropertyGridItemFactory, PropertyGridItemFactory>();
 
         using var serviceProvider = services.BuildServiceProvider();
         using var binder = new ModelBinder(serviceProvider, _mockRefreshManager.Object, _mockLayoutManager.Object);
@@ -141,7 +144,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -173,7 +176,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test", Age = 25 };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -198,7 +201,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -262,9 +265,9 @@ public class ModelBinderTests
 
         // Register control factories
         services.AddSingleton<IControlFactory>(new TestStringControlFactory());
-        services.AddSingleton<IControlFactory>(new TestNumericControlFactory()); 
+        services.AddSingleton<IControlFactory>(new TestNumericControlFactory());
         services.AddSingleton<IEnumerable<IWatchFactory>>(new List<IWatchFactory>());
-
+        services.AddSingleton<IPropertyGridItemFactory>(new PropertyGridItemFactory());
         _serviceProvider = services.BuildServiceProvider();
 
         _binder = new ModelBinder(_serviceProvider, _mockRefreshManager.Object, _mockLayoutManager.Object);
@@ -283,7 +286,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -300,7 +303,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Test" };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -340,7 +343,7 @@ public class ModelBinderTests
         var model = new TestModelWithUnsupportedType { UnsupportedProperty = DateTime.Now };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -355,7 +358,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Initial", Age = 25 };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));
@@ -375,7 +378,7 @@ public class ModelBinderTests
         var model = new TestModel { Name = "Initial", Age = 25 };
         var container = new Panel();
 
-        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control?, GridColumnSpan)>>()))
+        _mockLayoutManager.Setup(m => m.CalculateLayout(It.IsAny<IEnumerable<(Control, GridColumnSpan)>>()))
             .Returns(new List<GridCell>());
         _mockLayoutManager.Setup(m => m.RenderLayout(It.IsAny<IEnumerable<GridCell>>()))
             .Returns((new TableLayoutPanel(), 100));

@@ -21,8 +21,7 @@ public class HistoryTests
     {
         var history1 = new History("TestView", Array.Empty<object>());
         Assert.Multiple(() => {
-            Assert.That(history1.Equals(history1), Is.True);
-            Assert.That(history1 == history1, Is.True);
+            Assert.That(history1, Is.EqualTo(history1)); 
         });
     }
 

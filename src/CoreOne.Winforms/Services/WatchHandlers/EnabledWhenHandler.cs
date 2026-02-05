@@ -43,7 +43,7 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
                 .Each(p => TargetProperties[p] = properties.Get(p));
         }
 
-        protected override void OnRefresh(object model)
+        protected override void OnRefresh(object model, bool isFirst)
         {
             PropertyGridItem.InputControl.CrossThread(() => {
                 // All conditions must be satisfied (AND logic)

@@ -102,11 +102,7 @@ public class RefreshManagerTests
         Assert.That(handler.RefreshCalled, Is.True);
     }
 
-    private static Metadata CreateMetadata(Type type, string propertyName)
-    {
-        var propInfo = type.GetProperty(propertyName)!;
-        return new Metadata(propInfo, type, null, null);
-    }
+    private static Metadata CreateMetadata(Type type, string propertyName) => MetaType.GetMetadata(type, propertyName);
 
     private class TestModel
     {

@@ -15,7 +15,8 @@ public class StringControlFactory : IControlFactory
         };
 
         return new(textBox,
+            nameof(textBox.TextChanged),
             value => textBox.Text = value?.ToString(),
-            () => textBox.TextChanged += (s, e) => onValueChanged(textBox.Text));
+            () => onValueChanged(textBox.Text));
     }
 }

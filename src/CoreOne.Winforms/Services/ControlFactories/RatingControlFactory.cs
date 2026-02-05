@@ -34,7 +34,8 @@ public class RatingControlFactory : IControlFactory
         };
 
         return new(ratingControl,
+            nameof(ratingControl.ValueChanged),
             value => ratingControl.Value = Types.TryParse<int>(value?.ToString(), out var rating) ? rating : 0,
-            () => ratingControl.ValueChanged += (s, e) => onValueChanged(ratingControl.Value));
+            () => onValueChanged(ratingControl.Value));
     }
 }

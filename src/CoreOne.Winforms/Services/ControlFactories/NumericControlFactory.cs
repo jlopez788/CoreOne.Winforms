@@ -44,8 +44,9 @@ public class NumericControlFactory : IControlFactory
         }
 
         return new(numericUpDown,
+            nameof(numericUpDown.ValueChanged),
             value => Utility.Try(() => numericUpDown.Value = Convert.ToDecimal(value)),
-            () => numericUpDown.ValueChanged += (s, e) => {
+            () => {
                 object? convertedValue = underlyingType switch {
                     Type t when t == typeof(int) => (int)numericUpDown.Value,
                     Type t when t == typeof(long) => (long)numericUpDown.Value,

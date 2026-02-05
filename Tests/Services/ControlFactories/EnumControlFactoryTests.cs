@@ -95,17 +95,13 @@ public class EnumControlFactoryTests
 
         var context = _factory.CreateControl(property, model, _ => { });
         var comboBox = (ComboBox)context!.Control;
-        
+
         context.UpdateValue(TestStatus.Active);
 
         Assert.That(comboBox.SelectedItem, Is.EqualTo(TestStatus.Active));
     }
 
-    private static Metadata CreateMetadata(Type type, string propertyName)
-    {
-        var propInfo = type.GetProperty(propertyName)!;
-        return new Metadata(propInfo, propInfo.PropertyType, null, null);
-    }
+    private static Metadata CreateMetadata(Type type, string propertyName) => MetaType.GetMetadata(type, propertyName);
 
     private enum TestStatus
     {

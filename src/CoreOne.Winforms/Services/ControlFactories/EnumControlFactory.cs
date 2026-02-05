@@ -11,19 +11,23 @@ public class EnumControlFactory : DropdownControlFactory, IControlFactory
 
     protected override ControlContext? OnCreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
-        var result = base.OnCreateControl(property, model, onValueChanged);
-        if (result is null)
-            return null;
-
-        var combo = (ComboBox)result.Control;
+        var combo = new ComboBox {
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         combo.Items.AddRange([.. Enum.GetValues(underlyingType).Cast<object>()]);
-        return new(combo, value => {
-            if (value != null)
-            {
-                combo.SelectedItem = value;
-            }
-        }, result.BindEvent);
+        
+        return new(combo,
+            nameof(combo.SelectedIndexChanged),
+            value => {
+                if (value != null)
+                {
+                    combo.SelectedItem = value;
+                }
+            },
+            () => onValueChanged(combo.SelectedItem)
+        );
     }
 }

@@ -5,7 +5,7 @@ namespace CoreOne.Winforms.Services;
 public class RefreshManager : IRefreshManager
 {
     private readonly DataList<string, Metadata> DependencyMap = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Data<Metadata, IWatchHandler> Registrations = [];
+    private readonly DataList<Metadata, IWatchHandler> Registrations = [];
 
     public void Clear()
     {
@@ -15,14 +15,18 @@ public class RefreshManager : IRefreshManager
 
     public void NotifyPropertyChanged(object model, string propertyName, object? newValue)
     {
+        var kp = Registrations.FirstOrDefault(p => p.Key.Name.Matches(propertyName));
+        kp.Value?.Each(p => p.Refresh(model));
+
         DependencyMap.Get(propertyName)
                ?.Select(p => Registrations.TryGetValue(p, out var context) ? context : null)
-               ?.Each(p => p?.Refresh(model));
+               ?.SelectMany(p => p is null ? [] : p)
+               ?.Each(p => p.Refresh(model));
     }
 
     public void RegisterContext(IWatchHandler context, object model)
     {
-        Registrations.Set(context.Property, context);
+        Registrations.Add(context.Property, context);
 
         // Build reverse dependency map (property -> contexts that depend on it)
         context.Dependencies.Each(p => DependencyMap.Add(p, context.Property));

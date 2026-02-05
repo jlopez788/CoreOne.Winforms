@@ -8,5 +8,5 @@ public interface IPropertyGridItemFactory
     /// <summary>
     /// Creates a property grid item with label above the control
     /// </summary>
-    PropertyGridItem? CreatePropertyGridItem(Metadata property, object model, Action<object?> onValueChanged);
+    PropertyGridItem? CreatePropertyGridItem(IControlFactory factory, Metadata property, object model, Action<object?> onValueChanged, ErrorProvider? errorProvider = null);
 }

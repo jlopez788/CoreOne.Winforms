@@ -1,5 +1,6 @@
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Models;
+using SimpleFormExample.Attributes;
 using SimpleFormExample.Providers;
 using System.ComponentModel.DataAnnotations;
 
@@ -41,9 +42,10 @@ public class Customer
     [DropdownSource(typeof(IndustryProvider))]
     [GridColumn(GridColumnSpan.Two)]
     public string? Industry { get; set; }
-
+    [Required]
+    [Adult]
     [GridColumn(GridColumnSpan.Full)]
-    public DateTime DateOfBirth { get; set; } = DateTime.Now.AddYears(-30);
+    public DateTime DateOfBirth { get; set; } = DateTime.Now.AddYears(-19);
 
     [GridColumn(GridColumnSpan.Half)]
     public bool IsActive { get; set; } = true;

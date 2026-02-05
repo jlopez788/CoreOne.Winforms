@@ -42,10 +42,14 @@ public class StringControlFactoryTests
         var valueChanged = false;
         object? capturedValue = null;
 
-        var context = _factory.CreateControl(property, model, v => { valueChanged = true; capturedValue = v; });
+        var context = _factory.CreateControl(property, model, v => {
+            valueChanged = true;
+            capturedValue = v;
+        });
 
         Assert.That(context, Is.Not.Null);
         Assert.That(context!.Control, Is.InstanceOf<TextBox>());
+        Assert.That(valueChanged, Is.False);
     }
 
     [Test]

@@ -23,12 +23,10 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
                 return;
 
             var parameters = method.GetParameters();
-
             var properties = MetaType.GetMetadatas(modelType).ToDictionary();
 
             _invokeCallback = MetaType.GetInvokeMethod(method);
             _hasResult = method.ReturnType != Types.Void;
-
             gridItem.InputControl?.Enabled = false;
             if (parameters?.Length > 0)
             {
@@ -40,6 +38,7 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
                     }
                     else if (!string.IsNullOrEmpty(parameter.Name) && properties.TryGetValue(parameter.Name, out var meta))
                     {
+                        Dependencies.Add(parameter.Name);
                         _parameterGetters.Add(m => {
                             var value = m is null ? parameter.ParameterType.GetDefault() : meta.GetValue(m);
                             return Convert.ChangeType(value, parameter.ParameterType);
@@ -49,7 +48,7 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
             }
         }
 
-        protected override void OnRefresh(object model)
+        protected override void OnRefresh(object model, bool isFirst)
         {
             if (_invokeCallback.Equals(InvokeCallback.Empty))
                 return;
@@ -60,9 +59,10 @@ public class ComputeHandler : WatchFactoryFromAttribute<ComputeAttribute>, IWatc
             if (_hasResult)
             {
                 result = Convert.ChangeType(result, Property.FPType);
-                var flag = Property.SetValue(model, result);
-                Property.Setter?.Invoke(model, result);
-                gridItem.SetValue?.Invoke(result);
+                Property.SetValue(model, result);
+                gridItem.ControlContext.UnbindEvent();
+                gridItem.SetValue(result);
+                gridItem.ControlContext.BindEvent();
             }
         }
     }

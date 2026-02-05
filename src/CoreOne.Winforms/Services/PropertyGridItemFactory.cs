@@ -1,3 +1,4 @@
+using CoreOne.Reactive;
 using CoreOne.Winforms.Attributes;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -9,12 +10,10 @@ namespace CoreOne.Winforms.Services;
 /// </summary>
 public class PropertyGridItemFactory : IPropertyGridItemFactory
 {
-    private readonly IControlFactory ControlFactory;
     private readonly Func<Metadata, string?>[] DisplayAttributes;
 
-    public PropertyGridItemFactory(IControlFactory controlFactory)
+    public PropertyGridItemFactory()
     {
-        ControlFactory = controlFactory ?? throw new ArgumentNullException(nameof(controlFactory));
         DisplayAttributes = [
             m=>getName<DisplayAttribute>(m,p=>p.Name),
             m=>getName<DisplayNameAttribute>(m,p=>p.DisplayName),
@@ -29,12 +28,12 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         }
     }
 
-    public PropertyGridItem? CreatePropertyGridItem(Metadata property, object model, Action<object?> onValueChanged)
+    public PropertyGridItem? CreatePropertyGridItem(IControlFactory factory, Metadata property, object model, Action<object?> onValueChanged, ErrorProvider? errorProvider = null)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(onValueChanged);
 
-        if (!ControlFactory.CanHandle(property))
+        if (!factory.CanHandle(property))
             return null;
 
         // Create label
@@ -46,19 +45,21 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         };
 
         // Create control - use special method for dropdowns that support refresh
-        var controlContext = ControlFactory.CreateControl(property, model, onValueChanged);
+        var controlContext = factory.CreateControl(property, model, onValueChanged);
         var inputControl = controlContext?.Control;
         if (controlContext is null || inputControl == null)
             return null;
 
         inputControl.Dock = DockStyle.Top;
         inputControl.Height = 25;
+        inputControl.Padding = new Padding(0, 0, 20, 0); // Reserve space on right for ErrorProvider icon
 
         // Create container panel with vertical layout
         var container = new Panel {
             Dock = DockStyle.Fill,
             AutoSize = true,
-            MinimumSize = new Size(0, 45)
+            MinimumSize = new Size(30, 45),
+            Padding = new Padding(0, 0, 20, 0) // Extra padding on right for ErrorProvider icon
         };
 
         var visible = property.GetCustomAttribute<VisibleAttribute>()?.IsVisible;
@@ -70,13 +71,15 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         controlContext.UpdateValue(currentValue);
         controlContext.BindEvent();
 
-        return new PropertyGridItem(inputControl, property, controlContext.UpdateValue) {
+        var propertyItem = new PropertyGridItem(controlContext, property, controlContext.UpdateValue) {
             Property = property,
             Label = label,
-            InputControl = inputControl,
             Container = container,
-            ColumnSpan = columnSpan
+            ColumnSpan = columnSpan,
+            ErrorProvider = errorProvider
         };
+
+        return propertyItem;
 
         GridColumnSpan GetColumnSpan(Metadata property)
         {

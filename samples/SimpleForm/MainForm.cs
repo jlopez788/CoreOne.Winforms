@@ -106,7 +106,6 @@ public partial class MainForm : Form
             Country = "US",
             State = "CA",
             Industry = "TECH",
-            DateOfBirth = new DateTime(1990, 5, 15),
             IsActive = true,
             ActiveNotes = "Preferred customer since 2020",
             CustomerRating = 4,
@@ -126,18 +125,22 @@ public partial class MainForm : Form
             Width = 760,
             Height = 460,
             AutoScroll = true
-
         };
 
         // Subscribe to property changes (reactive pattern)
+        //var builder = new StringBuilder();
+        //var bounce = new Debounce(() => {
+        //    MessageBox.Show(builder.ToString(), "Updates", MessageBoxButtons.OK);
+        //    builder.Clear();
+        //}, 1500);
         _modelControl.PropertyChanged?.Subscribe(change => {
             Console.WriteLine($"Property changed: {change.Property.Name} = {change.NewValue}");
+
+            //builder.AppendLine($"Property changed: {change.Property.Name} = {change.NewValue}");
+            //bounce.Invoke();
         }, Token);
 
-        // Subscribe to save event
         _modelControl.SaveClicked += OnSaveClicked;
-
-        // Set the model and generate controls
         _modelControl.SetModel(_customer);
 
         Controls.Add(_modelControl);

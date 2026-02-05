@@ -27,20 +27,22 @@ public class DropdownControlFactory : IControlFactory
             DropDownStyle = ComboBoxStyle.DropDownList
         };
 
-        return new(dropdown, value => {
-            foreach (var item in dropdown.Items)
-            {
-                if (item is DropdownItem dropdownItem && dropdownItem.Value?.Equals(value) == true)
+        return new(dropdown,
+            nameof(dropdown.SelectedIndexChanged),
+            value => {
+                foreach (var item in dropdown.Items)
                 {
-                    dropdown.SelectedItem = item;
-                    return;
+                    if (item is DropdownItem dropdownItem && dropdownItem.Value?.Equals(value) == true)
+                    {
+                        dropdown.SelectedItem = item;
+                        return;
+                    }
                 }
+            },
+            () => {
+                if (dropdown.SelectedItem is DropdownItem selectedItem)
+                    onValueChanged(selectedItem.Value);
             }
-        },
-        () => dropdown.SelectedIndexChanged += (s, e) => {
-            if (dropdown.SelectedItem is DropdownItem selectedItem)
-                onValueChanged(selectedItem.Value);
-        }
         );
     }
 }

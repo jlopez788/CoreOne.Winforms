@@ -13,7 +13,8 @@ public class BooleanControlFactory : IControlFactory
     {
         var checkBox = new CheckBox();
         return new(checkBox,
+            nameof(checkBox.CheckedChanged),
             value => checkBox.Checked = value is bool flag && flag,
-            () => checkBox.CheckedChanged += (s, e) => onValueChanged(checkBox.Checked));
+            () => onValueChanged(checkBox.Checked));
     }
 }
