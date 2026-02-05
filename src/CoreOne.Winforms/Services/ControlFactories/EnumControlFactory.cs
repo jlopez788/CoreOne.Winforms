@@ -1,24 +1,24 @@
 namespace CoreOne.Winforms.Services.ControlFactories;
 
-public class EnumControlFactory : DropdownControlFactory, IControlFactory
+public class EnumControlFactory : IControlFactory
 {
-    protected override bool OnCanHandle(Metadata property)
+    public bool CanHandle(Metadata property)
     {
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         return underlyingType.IsEnum;
     }
 
-    protected override ControlContext? OnCreateControl(Metadata property, object model, Action<object?> onValueChanged)
+    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var combo = new ComboBox {
             DropDownStyle = ComboBoxStyle.DropDownList
         };
-        
+
         var propertyType = property.FPType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         combo.Items.AddRange([.. Enum.GetValues(underlyingType).Cast<object>()]);
-        
+
         return new(combo,
             nameof(combo.SelectedIndexChanged),
             value => {

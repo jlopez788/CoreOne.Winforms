@@ -19,17 +19,19 @@ public abstract class WatchHandler : IWatchHandler
     public void Refresh(object model)
     {
         var isFirst = false;
-        using (Sync.EnterScope())
+        if (!IsInitialized)
         {
-            if (!IsInitialized)
+            using (Sync.EnterScope())
             {
-                isFirst = true;
-                Utility.Try(() => OnInitialize(model));
-                IsInitialized = true;
+                if (!IsInitialized)
+                {
+                    isFirst = true;
+                    Utility.Try(() => OnInitialize(model));
+                    IsInitialized = true;
+                }
             }
-
-            OnRefresh(model, isFirst);
         }
+        OnRefresh(model, isFirst);
     }
 
     protected virtual void OnInitialize(object model)

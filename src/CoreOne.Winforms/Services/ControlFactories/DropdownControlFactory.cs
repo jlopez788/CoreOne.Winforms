@@ -12,16 +12,9 @@ public class DropdownControlFactory : IControlFactory
     /// </summary>
     public int Priority => 100;
 
-    public bool CanHandle(Metadata property) => OnCanHandle(property);
+    public bool CanHandle(Metadata property) => property.GetCustomAttribute<DropdownSourceAttribute>() != null;
 
     public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
-    {
-        return OnCreateControl(property, model, onValueChanged);
-    }
-
-    protected virtual bool OnCanHandle(Metadata property) => property.GetCustomAttribute<DropdownSourceAttribute>() != null;
-
-    protected virtual ControlContext? OnCreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var dropdown = new ComboBox {
             DropDownStyle = ComboBoxStyle.DropDownList
