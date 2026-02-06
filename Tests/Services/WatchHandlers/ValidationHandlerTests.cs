@@ -190,7 +190,7 @@ public class ValidationHandlerTests
     private static PropertyGridItem CreatePropertyGridItem(Type type, string propertyName, Control control, ErrorProvider? errorProvider = null)
     {
         var property = CreateMetadata(type, propertyName);
-        var contronContext = new ControlContext(control, "", p => { }, () => { });
+        var contronContext = new EventControlContext(control, "", p => { }, () => { });
         return new PropertyGridItem(contronContext, property, _ => { }) {
             Label = new Label { Text = propertyName },
             ErrorProvider = errorProvider

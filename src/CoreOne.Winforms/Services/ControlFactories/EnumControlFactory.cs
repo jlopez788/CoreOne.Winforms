@@ -19,7 +19,7 @@ public class EnumControlFactory : IControlFactory
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         combo.Items.AddRange([.. Enum.GetValues(underlyingType).Cast<object>()]);
 
-        return new(combo,
+        return new EventControlContext(combo,
             nameof(combo.SelectedIndexChanged),
             value => {
                 if (value != null)

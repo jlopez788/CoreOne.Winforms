@@ -18,7 +18,11 @@ public class Customer
     [Required]
     [GridColumn(GridColumnSpan.Half)]
     public string LastName { get; set; } = string.Empty;
-
+    // Computed property for display name
+    [Compute(nameof(GetFullName))]
+    [WatchProperties(nameof(FirstName), nameof(LastName))]
+    [GridColumn(GridColumnSpan.Full)]
+    public string FullName { get; set; } = string.Empty;
     [Required]
     [EmailAddress]
     [GridColumn(GridColumnSpan.Half)]
@@ -50,6 +54,10 @@ public class Customer
     [GridColumn(GridColumnSpan.Half)]
     public bool IsActive { get; set; } = true;
 
+    [File(multiselect: false)]
+    [EnabledWhen(nameof(IsActive), true)]
+    public string? File { get; set; }
+
     // This field is only enabled when IsActive is true
     [EnabledWhen(nameof(IsActive), true)]
     [GridColumn(GridColumnSpan.Full)]
@@ -69,12 +77,6 @@ public class Customer
     // This property won't generate a control (internal use only)
     [Ignore]
     public int InternalId { get; set; }
-
-    // Computed property for display name
-    [Compute(nameof(GetFullName))]
-    [WatchProperties(nameof(FirstName), nameof(LastName))]
-    [GridColumn(GridColumnSpan.Full)]
-    public string FullName { get; set; } = string.Empty;
 
     public decimal CalculateTotalScore(int customerRating) => IsActive ? customerRating * 10 : 0;
 

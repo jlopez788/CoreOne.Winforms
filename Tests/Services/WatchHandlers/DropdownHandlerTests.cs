@@ -336,7 +336,7 @@ public class DropdownHandlerTests
     private static PropertyGridItem CreatePropertyGridItem(Type type, string propertyName, Control control, object model)
     {
         var metadata = CreateMetadata(type, propertyName);
-        var controlContext = new ControlContext(control, "", p => metadata.SetValue(model, p), () => { });
+        var controlContext = new EventControlContext(control, "", p => metadata.SetValue(model, p), () => { });
         return new PropertyGridItem(controlContext, metadata, value => metadata.SetValue(model, value));
     }
 

@@ -33,7 +33,7 @@ public class PropertyGridItem(ControlContext controlContext, Metadata property, 
     /// Gets or sets the property metadata
     /// </summary>
     public Metadata Property { get; set; } = property;
-    
+
     private string Display => $"{Property.Name} <{InputControl.GetType().Name}> ({ColumnSpan})";
 
     public void SetValue(object? value) => setValue?.Invoke(value);
@@ -41,6 +41,7 @@ public class PropertyGridItem(ControlContext controlContext, Metadata property, 
     protected override void OnDispose()
     {
         Utility.Try(() => {
+            ControlContext.Dispose();
             Label.Dispose();
             InputControl.Dispose();
             Container.Dispose();

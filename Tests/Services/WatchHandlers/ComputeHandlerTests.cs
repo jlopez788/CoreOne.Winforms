@@ -105,7 +105,7 @@ public class ComputeHandlerTests
     private static PropertyGridItem CreatePropertyGridItem(Type type, string propertyName, TextBox control, object model)
     {
         var metadata = MetaType.GetMetadata(type, propertyName);
-        var controlContext = new ControlContext(control, "", p => metadata.SetValue(model, p), () => { });
+        var controlContext = new EventControlContext(control, "", p => metadata.SetValue(model, p), () => { });
         return new PropertyGridItem(controlContext, metadata, value => {
             control.Text = value?.ToString() ?? "";
             metadata.SetValue(model, value);

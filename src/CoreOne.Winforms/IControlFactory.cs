@@ -39,7 +39,7 @@ public interface IControlFactory
     /// <param name="model">The model instance containing the property.</param>
     /// <param name="onValueChanged">Callback invoked when the control's value changes.</param>
     /// <returns>
-    /// A <see cref="ControlContext"/> containing the created control and binding delegates,
+    /// A <see cref="EventControlContext"/> containing the created control and binding delegates,
     /// or null if the control cannot be created.
     /// </returns>
     ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged);

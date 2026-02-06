@@ -12,7 +12,7 @@ public class BooleanControlFactory : IControlFactory
     public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var checkBox = new CheckBox();
-        return new(checkBox,
+        return new EventControlContext(checkBox,
             nameof(checkBox.CheckedChanged),
             value => checkBox.Checked = value is bool flag && flag,
             () => onValueChanged(checkBox.Checked));

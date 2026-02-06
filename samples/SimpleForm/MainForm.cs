@@ -176,6 +176,7 @@ public partial class MainForm : Form
                      $"Rating: {customer.CustomerRating} stars\n" +
                      $"Total Score: {customer.TotalScore}\n" +
                      $"Active: {customer.IsActive}\n" +
+                     $"File: {customer.File}\n"+
                      $"\nModified: {(e.IsModified ? "Yes" : "No")}";
 
         MessageBox.Show(

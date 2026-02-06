@@ -19,7 +19,7 @@ public class HistoryTests
     [Test]
     public void Equals_SameInstance_ReturnsTrue()
     {
-        var history1 = new History("TestView", Array.Empty<object>());
+        var history1 = new History("TestView", []);
         Assert.Multiple(() => {
             Assert.That(history1, Is.EqualTo(history1)); 
         });

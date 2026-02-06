@@ -37,7 +37,7 @@ public class ModelBinderTests
         {
             var numericUpDown = new NumericUpDown();
             numericUpDown.Name = property.Name;
-            return new ControlContext(numericUpDown,
+            return new EventControlContext(numericUpDown,
                 "ValueChanged",
                 value => numericUpDown.Value = value is int i ? i : 0,
                 () => onValueChanged((int)numericUpDown.Value));
@@ -56,7 +56,7 @@ public class ModelBinderTests
             var textBox = new TextBox();
             textBox.Name = property.Name;
 
-            return new ControlContext(textBox,
+            return new EventControlContext(textBox,
                 "TextChanged",
                 value => textBox.Text = value?.ToString() ?? "",
                 () => onValueChanged(textBox.Text));

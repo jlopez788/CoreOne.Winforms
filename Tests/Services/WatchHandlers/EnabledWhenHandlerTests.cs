@@ -66,7 +66,7 @@ public class EnabledWhenHandlerTests
     private static PropertyGridItem CreatePropertyGridItem(Type type, string propertyName, Control control)
     {
         var metadata = CreateMetadata(type, propertyName);
-        var controlContext = new ControlContext(control, "", p => { }, () => { });
+        var controlContext = new EventControlContext(control, "", p => { }, () => { });
         return new PropertyGridItem(controlContext, metadata, _ => { });
     }
 }

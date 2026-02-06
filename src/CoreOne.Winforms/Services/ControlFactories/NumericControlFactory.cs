@@ -43,7 +43,7 @@ public class NumericControlFactory : IControlFactory
             numericUpDown.Increment = 1;
         }
 
-        return new(numericUpDown,
+        return new EventControlContext(numericUpDown,
             nameof(numericUpDown.ValueChanged),
             value => Utility.Try(() => numericUpDown.Value = Convert.ToDecimal(value)),
             () => {

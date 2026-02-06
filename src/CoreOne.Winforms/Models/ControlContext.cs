@@ -1,24 +1,29 @@
-using CoreOne.Reactive;
-
 namespace CoreOne.Winforms.Models;
 
-public class ControlContext(Control control, string eventName, Action<object?> setValue, Action controlChanged)
+public abstract class ControlContext(Control control, Action<object?> setValue) : Disposable
 {
-    private SToken Token = SToken.Create();
     public Control Control { get; } = control;
+    protected SToken Token { get; set; } = SToken.Create();
 
     public void BindEvent()
     {
         Token.Dispose();
-        if (!string.IsNullOrEmpty(eventName))
-        {
-            Token = SToken.Create();
-            Observable.FromEvent<EventArgs>(Control, eventName)
-                .Subscribe(p => controlChanged?.Invoke(), Token);
-        }
+        OnBindEvent();
     }
 
-    public void UnbindEvent() => Token.Dispose();
+    public void UnbindEvent() => OnUnbindEvent();
 
     public void UpdateValue(object? currentValue) => setValue.Invoke(currentValue);
+
+    protected virtual void OnBindEvent()
+    {
+    }
+
+    protected override void OnDispose()
+    {
+        base.OnDispose();
+        OnUnbindEvent();
+    }
+
+    protected virtual void OnUnbindEvent() => Token.Dispose();
 }

@@ -12,7 +12,7 @@ public class DateTimeControlFactory : IControlFactory
     public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
     {
         var dateTimePicker = new DateTimePicker();
-        return new(dateTimePicker,
+        return new EventControlContext(dateTimePicker,
             nameof(dateTimePicker.ValueChanged),
             value => dateTimePicker.Value = (DateTime)(value ?? DateTime.Now),
             () => onValueChanged(dateTimePicker.Value));

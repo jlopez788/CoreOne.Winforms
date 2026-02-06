@@ -14,7 +14,7 @@ public class StringControlFactory : IControlFactory
             Name = property.Name
         };
 
-        return new(textBox,
+        return new EventControlContext(textBox,
             nameof(textBox.TextChanged),
             value => textBox.Text = value?.ToString(),
             () => onValueChanged(textBox.Text));

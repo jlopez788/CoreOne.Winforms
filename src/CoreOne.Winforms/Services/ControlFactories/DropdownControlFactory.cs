@@ -20,7 +20,7 @@ public class DropdownControlFactory : IControlFactory
             DropDownStyle = ComboBoxStyle.DropDownList
         };
 
-        return new(dropdown,
+        return new EventControlContext(dropdown,
             nameof(dropdown.SelectedIndexChanged),
             value => {
                 foreach (var item in dropdown.Items)

@@ -30,7 +30,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -81,7 +81,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -97,7 +97,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -113,7 +113,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -129,7 +129,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -145,7 +145,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -161,7 +161,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -179,7 +179,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", value => {
+            .Returns(new EventControlContext(textBox, "TextChanged", value => {
                 setValueCalled = true;
                 capturedValue = value;
             }, () => { }));
@@ -199,7 +199,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -216,7 +216,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -234,7 +234,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -252,7 +252,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -269,7 +269,7 @@ public class PropertyGridItemFactoryTests
 
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
-            .Returns((ControlContext?)null);
+            .Returns((EventControlContext?)null);
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
@@ -287,7 +287,7 @@ public class PropertyGridItemFactoryTests
         _mockControlFactory.Setup(f => f.CanHandle(property)).Returns(true);
         _mockControlFactory.Setup(f => f.CreateControl(property, model, It.IsAny<Action<object?>>()))
             .Callback<Metadata, object, Action<object?>>((p, m, cb) => capturedCallback = cb)
-            .Returns(new ControlContext(textBox, "TextChanged", _ => { }, () => { }));
+            .Returns(new EventControlContext(textBox, "TextChanged", _ => { }, () => { }));
 
         var gridItem = _factory.CreatePropertyGridItem(_mockControlFactory.Object, property, model, _ => { });
 
