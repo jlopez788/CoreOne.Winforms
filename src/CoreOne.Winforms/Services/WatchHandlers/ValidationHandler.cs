@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CoreOne.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace CoreOne.Winforms.Services.WatchHandlers;
 
@@ -6,16 +7,21 @@ public class ValidationHandler : WatchFactoryFromAttribute<ValidationAttribute>,
 {
     private class ValidationHandlerInstance(PropertyGridItem gridItem, ValidationAttribute[] attributes) : WatchHandler(gridItem.Property)
     {
+        private readonly bool HasRequiredIf = attributes.OfType<RequiredIfAttribute>().Any();
         private Debounce<object> Debounce = default!;
         private Font Font = default!;
+        private bool IsRequired = false;
+        private string Label = string.Empty;
 
         protected override void OnInitialize(object model)
         {
             Debounce = new Debounce<object>(OnDebounce, 300);
             Font = gridItem.Label.Font;
+            Label = gridItem.Label.Text;
             if (attributes.OfType<RequiredAttribute>().Any())
             {
-                gridItem.Label.Text += " *";
+                IsRequired = true;
+                gridItem.Label.Text = $"{Label} *";
             }
         }
 
@@ -37,21 +43,26 @@ public class ValidationHandler : WatchFactoryFromAttribute<ValidationAttribute>,
         {
             var value = gridItem.Property.GetValue(model);
             var context = new ValidationContext(model);
-            var errors = attributes.Select(p => p.GetValidationResult(value, context))
-                .Select(p => p?.ErrorMessage)
-                .ExcludeNullOrEmpty()
-                .ToList();
+            var messages = attributes.Select(p => {
+                return new {
+                    validation = p.GetValidationResult(value, context),
+                    isRequired = HasRequiredIf && p is RequiredIfAttribute req && req.IsRequired(model)
+                };
+            }).ToList();
 
+            gridItem.Label.Text = (IsRequired || messages.Any(p => p.isRequired)) ? $"{Label} *" : Label;
             if (gridItem.ErrorProvider is not null)
             {
+                var errors = messages.Select(p => p.validation?.ErrorMessage)
+                    .ExcludeNullOrEmpty()
+                    .ToList();
                 var isValid = errors.Count == 0;
                 var errorMessage = isValid ? string.Empty : string.Join(Environment.NewLine, errors);
-                
+
                 // Set icon alignment to appear to the right of the control
                 gridItem.ErrorProvider.SetIconAlignment(gridItem.InputControl, ErrorIconAlignment.MiddleRight);
                 gridItem.ErrorProvider.SetIconPadding(gridItem.InputControl, 2);
                 gridItem.ErrorProvider.SetError(gridItem.InputControl, errorMessage);
-                
                 gridItem.Label.Font = isValid ? Font : new Font(Font.FontFamily, Font.Size, FontStyle.Bold);
                 gridItem.Label.ForeColor = isValid ? SystemColors.ControlText : Color.Firebrick;
             }

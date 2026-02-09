@@ -2,6 +2,7 @@ using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Models;
 using SimpleFormExample.Attributes;
 using SimpleFormExample.Providers;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace SimpleFormExample.Models;
@@ -29,6 +30,7 @@ public class Customer
     public string Email { get; set; } = string.Empty;
 
     [Phone]
+    [ReadOnly(true)]
     [GridColumn(GridColumnSpan.Half)]
     public string? Phone { get; set; }
 

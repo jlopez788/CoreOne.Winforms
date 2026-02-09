@@ -28,8 +28,7 @@ public class RefreshManager : IRefreshManager
     {
         Registrations.Add(context.Property, context);
 
-        // Build reverse dependency map (property -> contexts that depend on it)
-        context.Dependencies.Each(p => DependencyMap.Add(p, context.Property));
         context.Refresh(model);
+        context.Dependencies.Each(p => DependencyMap.Add(p, context.Property));
     }
 }

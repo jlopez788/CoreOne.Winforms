@@ -1,4 +1,3 @@
-using CoreOne.Attributes;
 using CoreOne.Winforms.Attributes;
 
 namespace CoreOne.Winforms.Services.WatchHandlers;
@@ -29,77 +28,15 @@ namespace CoreOne.Winforms.Services.WatchHandlers;
 /// </example>
 public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute>, IWatchFactory
 {
-    private class EnabledWhenHandlerInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes) : WatchHandler(gridItem.Property)
+    private class EnabledWhenHandlerInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes) : WhenHandler(gridItem, attributes)
     {
-        private readonly EnabledWhenAttribute[] EnabledAttributes = attributes;
-        private readonly PropertyGridItem PropertyGridItem = gridItem;
-        private readonly Dictionary<string, Metadata> TargetProperties = new(StringComparer.OrdinalIgnoreCase);
-
-        protected override void OnInitialize(object model)
+        protected override void OnCondiition(object model, IReadOnlyList<bool> flags)
         {
-            var modelType = model.GetType();
-            var properties = MetaType.GetMetadatas(modelType).ToDictionary();
-            EnabledAttributes.SelectMany(p => p.PropertyNames)
-                .Each(p => TargetProperties[p] = properties.Get(p));
-        }
-
-        protected override void OnRefresh(object model, bool isFirst)
-        {
-            PropertyGridItem.InputControl.CrossThread(() => {
-                // All conditions must be satisfied (AND logic)
-                var isEnabled = true;
-                foreach (var attr in EnabledAttributes)
-                {
-                    if (!TargetProperties.TryGetValue(attr.PropertyName, out var targetProperty))
-                        continue;
-
-                    var targetValue = targetProperty.GetValue(model);
-                    var conditionMet = EvaluateCondition(targetValue, attr.ExpectedValue, attr.ComparisonType);
-
-                    if (!conditionMet)
-                    {
-                        isEnabled = false;
-                        break;
-                    }
-                }
-
-                PropertyGridItem.InputControl.Enabled = isEnabled;
-            });
-        }
-
-        private static bool EvaluateCondition(object? sourceValue, object? targetValue, ComparisonType comparisonType)
-        {
-            var sourceComparable = sourceValue as IComparable;
-            var isSVNull = sourceComparable == null;
-            var isTVNull = targetValue == null;
-
-            if (sourceValue is not null && !typeof(IComparable).IsAssignableFrom(sourceValue.GetType()))
-            {
-                var typeName = sourceValue.GetType().Name;
-                throw new ArgumentException(
-                    $"Source value of type '{typeName}' does not implement IComparable interface. " +
-                    $"Comparison operations require IComparable. Consider using ComparisonType.EqualTo/NotEqualTo " +
-                    $"with types that implement IEquatable<T>, or implement IComparable on '{typeName}'.");
-            }
-
-            return comparisonType switch {
-                ComparisonType.LessThan => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) < 0,
-                ComparisonType.LessThanOrEqualTo => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) <= 0,
-                ComparisonType.NotEqualTo => (!isSVNull && isTVNull) || (isSVNull && !isTVNull) ||
-                                             (!isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) != 0),
-                ComparisonType.EqualTo => (isSVNull && isTVNull) ||
-                                          (!isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) == 0),
-                ComparisonType.GreaterThan => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) > 0,
-                ComparisonType.GreaterThanOrEqualTo => !isSVNull && !isTVNull && sourceComparable?.CompareTo(targetValue) >= 0,
-                _ => throw new InvalidOperationException(
-                    $"Unsupported comparison type '{comparisonType}'. " +
-                    $"Supported types: EqualTo, NotEqualTo, GreaterThan, LessThan, GreaterThanOrEqualTo, LessThanOrEqualTo."),
-            };
+            // Control is enabled only if ALL conditions are satisfied (AND logic)
+            var shouldEnable = flags.All(f => f);
+            PropertyGridItem.InputControl.Enabled = shouldEnable;
         }
     }
 
-    protected override IWatchHandler? OnCreateInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes)
-    {
-        return new EnabledWhenHandlerInstance(gridItem, attributes);
-    }
+    protected override IWatchHandler? OnCreateInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes) => new EnabledWhenHandlerInstance(gridItem, attributes);
 }
