@@ -1,10 +1,8 @@
-using CoreOne.Attributes;
+using CoreOne.Models;
 using CoreOne.Reflection;
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Models;
 using CoreOne.Winforms.Services.WatchHandlers;
-using System.Reflection;
-using System.Windows.Forms;
 
 namespace Tests.Services.WatchHandlers;
 
@@ -57,6 +55,8 @@ public class EnabledWhenHandlerTests
         var gridItem = CreatePropertyGridItem(typeof(TestModel), nameof(TestModel.DependentField), new TextBox());
 
         var handler = _factory.CreateInstance(gridItem);
+        Assert.That(handler, Is.Not.Null);
+        handler.Refresh(new TestModel { IsActive = true });
 
         Assert.That(handler!.Dependencies, Does.Contain(nameof(TestModel.IsActive)));
     }

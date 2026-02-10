@@ -115,9 +115,97 @@ public class TypeViewManagerTests
         Assert.That(manager.ContainsKey("TestView"), Is.False);
     }
 
+    [Test]
+    public void Set_OverwritesExistingKey()
+    {
+        var manager = new TypeViewManager(type => new TestView());
+        manager.Set("Test", typeof(TestView));
+        manager.Set("Test", typeof(AnotherTestView));
+
+        var hasKey = manager.TryGetValue("Test", out var type);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(hasKey, Is.True);
+            Assert.That(type, Is.EqualTo(typeof(AnotherTestView)));
+        }
+    }
+
+    [Test]
+    public void Resolve_WithServiceProvider_UsesServiceProviderFirst()
+    {
+        var resolvedView = new TestView();
+        var manager = new TypeViewManager(type => resolvedView);
+        manager.Set("Test", typeof(TestView));
+
+        var view = manager.Resolve("Test");
+
+        Assert.That(view, Is.SameAs(resolvedView));
+    }
+
+    [Test]
+    public void Resolve_CaseInsensitiveMatch()
+    {
+        var manager = new TypeViewManager(type => new TestView());
+        manager.Set("TestView", typeof(TestView));
+
+        var view = manager.Resolve("testview");
+
+        Assert.That(view, Is.Not.Null);
+    }
+
+    [Test]
+    public void TryGetValue_NonExistentKey_ReturnsFalse()
+    {
+        var manager = new TypeViewManager(type => new TestView());
+
+        var exists = manager.TryGetValue("NonExistent", out var type);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(exists, Is.False);
+            Assert.That(type, Is.Null);
+        }
+    }
+
+    [Test]
+    public void ContainsKey_NonExistentKey_ReturnsFalse()
+    {
+        var manager = new TypeViewManager(type => new TestView());
+
+        Assert.That(manager.ContainsKey("NonExistent"), Is.False);
+    }
+
+    [Test]
+    public void RegisterViews_WithMultipleViews_RegistersAll()
+    {
+        var manager = new TypeViewManager(type => {
+            if (type == typeof(TestView)) return new TestView();
+            if (type == typeof(AnotherTestView)) return new AnotherTestView();
+            throw new InvalidOperationException();
+        });
+        var assembly = Assembly.GetExecutingAssembly();
+
+        manager.RegisterViews(assembly);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(manager.ContainsKey("Test"), Is.True);
+            Assert.That(manager.ContainsKey("AnotherTest"), Is.True);
+        }
+    }
+
     public class TestView : BaseView
     {
         public TestView()
+        {
+            // Empty constructor for testing
+        }
+    }
+
+    public class AnotherTestView : BaseView
+    {
+        public AnotherTestView()
         {
             // Empty constructor for testing
         }

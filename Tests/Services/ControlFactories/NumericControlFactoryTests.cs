@@ -154,6 +154,56 @@ public class NumericControlFactoryTests
         Assert.That(numericUpDown.Value, Is.EqualTo(42));
     }
 
+    [Test]
+    public void CreateControl_UpdateControlValueWithNull_UsesZero()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.Age));
+        var model = new TestModel();
+
+        var context = _factory.CreateControl(property, model, _ => { });
+        var numericUpDown = (NumericUpDown)context!.Control;
+        numericUpDown.Value = 50;
+
+        context.UpdateValue(null);
+
+        Assert.That(numericUpDown.Value, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void CreateControl_BindAndUnbindEvent_WorksCorrectly()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.Age));
+        var model = new TestModel();
+        var callbackCount = 0;
+
+        var context = _factory.CreateControl(property, model, _ => callbackCount++);
+        var numericUpDown = (NumericUpDown)context!.Control;
+
+        context.BindEvent();
+        numericUpDown.Value = 25;
+        Assert.That(callbackCount, Is.EqualTo(1));
+
+        context.UnbindEvent();
+        numericUpDown.Value = 30;
+
+        Assert.That(callbackCount, Is.EqualTo(1)); // Should not increase after unbind
+    }
+
+    [Test]
+    public void CreateControl_WithDecimalValue_MaintainsPrecision()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.Price));
+        var model = new TestModel();
+        var testValue = 123.45m;
+
+        var context = _factory.CreateControl(property, model, _ => { });
+        var numericUpDown = (NumericUpDown)context!.Control;
+
+        context.UpdateValue(testValue);
+
+        Assert.That(numericUpDown.Value, Is.EqualTo(testValue));
+    }
+
     private static Metadata CreateMetadata(Type type, string propertyName) => MetaType.GetMetadata(type, propertyName);
 
     private class TestModel

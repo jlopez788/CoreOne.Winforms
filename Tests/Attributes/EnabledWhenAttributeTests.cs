@@ -1,4 +1,5 @@
 using CoreOne.Attributes;
+using CoreOne.Models;
 using CoreOne.Winforms.Attributes;
 
 namespace CoreOne.Winforms.Tests.Attributes;

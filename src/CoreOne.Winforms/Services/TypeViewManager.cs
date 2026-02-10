@@ -9,13 +9,13 @@ public class TypeViewManager : Data<string, Type>
 {
     protected Func<Type, IView> OnResolve { get; }
 
-    public TypeViewManager(Func<Type, IView>? resolve = null)
+    public TypeViewManager(Func<Type, IView>? resolve = null) : base(StringComparer.OrdinalIgnoreCase)
     {
         var targetCreator = new TargetCreator(null);
         OnResolve = resolve ?? new Func<Type, IView>(type => (IView)targetCreator.CreateInstance(type)!);
     }
 
-    public TypeViewManager(IServiceProvider services)
+    public TypeViewManager(IServiceProvider services) : base(StringComparer.OrdinalIgnoreCase)
     {
         var targetCreator = new TargetCreator(services);
         OnResolve = type => (IView)(services.Resolve(type) ?? targetCreator.CreateInstance(type)!);

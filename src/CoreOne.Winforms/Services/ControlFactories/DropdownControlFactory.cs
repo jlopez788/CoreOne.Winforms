@@ -23,6 +23,11 @@ public class DropdownControlFactory : IControlFactory
         return new EventControlContext(dropdown,
             nameof(dropdown.SelectedIndexChanged),
             value => {
+                if (value is null)
+                {
+                    dropdown.SelectedItem = null;
+                    return;
+                }
                 foreach (var item in dropdown.Items)
                 {
                     if (item is DropdownItem dropdownItem && dropdownItem.Value?.Equals(value) == true)

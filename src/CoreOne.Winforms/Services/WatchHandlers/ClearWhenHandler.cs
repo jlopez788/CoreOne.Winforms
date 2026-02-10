@@ -13,8 +13,6 @@ public class ClearWhenHandler : WatchFactoryFromAttribute<ClearWhenAttribute>, I
             if (flags.Any(p => p))
             {
                 var value = LazyValue.Value;
-                // Clear the value by resetting to default
-                PropertyGridItem.Property.SetValue(model, value);
                 // Also update the UI control if necessary
                 PropertyGridItem.InputControl.CrossThread(() => {
                     Property.SetValue(model, value);

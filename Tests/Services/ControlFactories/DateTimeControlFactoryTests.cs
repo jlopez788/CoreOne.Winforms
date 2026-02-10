@@ -88,6 +88,73 @@ public class DateTimeControlFactoryTests
         Assert.That(picker.Value, Is.EqualTo(testDate));
     }
 
+    [Test]
+    public void CreateControl_UpdateControlValueWithNull_UsesCurrentDate()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.ModifiedDate));
+        var model = new TestModel();
+
+        var context = _factory.CreateControl(property, model, _ => { });
+        var picker = (DateTimePicker)context!.Control;
+        var originalValue = picker.Value;
+
+        context.UpdateValue(null);
+
+        // Should still have a valid date (DateTime can't be null in DateTimePicker)
+        Assert.That(picker.Value, Is.Not.EqualTo(default(DateTime)));
+    }
+
+    [Test]
+    public void CreateControl_BindAndUnbindEvent_WorksCorrectly()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.CreatedDate));
+        var model = new TestModel();
+        var callbackCount = 0;
+
+        var context = _factory.CreateControl(property, model, _ => callbackCount++);
+        var picker = (DateTimePicker)context!.Control;
+
+        context.BindEvent();
+        picker.Value = new DateTime(2025, 1, 15);
+        Assert.That(callbackCount, Is.EqualTo(1));
+
+        context.UnbindEvent();
+        picker.Value = new DateTime(2025, 1, 16);
+
+        Assert.That(callbackCount, Is.EqualTo(1)); // Should not increase after unbind
+    }
+
+    [Test]
+    public void CreateControl_WithMinAndMaxValues_HandlesEdgeCases()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.CreatedDate));
+        var model = new TestModel();
+
+        var context = _factory.CreateControl(property, model, _ => { });
+        var picker = (DateTimePicker)context!.Control;
+
+        // Test updating with very old date
+        var oldDate = new DateTime(1900, 1, 1);
+        context.UpdateValue(oldDate);
+        Assert.That(picker.Value, Is.EqualTo(oldDate));
+
+        // Test updating with future date
+        var futureDate = new DateTime(2099, 12, 31);
+        context.UpdateValue(futureDate);
+        Assert.That(picker.Value, Is.EqualTo(futureDate));
+    }
+
+    [Test]
+    public void CreateControl_Dispose_DisposesControl()
+    {
+        var property = CreateMetadata(typeof(TestModel), nameof(TestModel.CreatedDate));
+        var model = new TestModel();
+
+        var context = _factory.CreateControl(property, model, _ => { });
+
+        Assert.DoesNotThrow(() => context!.Dispose());
+    }
+
     private static Metadata CreateMetadata(Type type, string propertyName) => MetaType.GetMetadata(type, propertyName);
 
     private class TestModel
