@@ -17,8 +17,8 @@ public class ClearWhenHandler : WatchFactoryFromAttribute<ClearWhenAttribute>, I
                 PropertyGridItem.Property.SetValue(model, value);
                 // Also update the UI control if necessary
                 PropertyGridItem.InputControl.CrossThread(() => {
-                    PropertyGridItem.SetValue(value);
                     Property.SetValue(model, value);
+                    PropertyGridItem.SetValue(value);
                 });
             }
         }
