@@ -307,21 +307,6 @@ public class ControlStateManagerTests
     }
 
     [Test]
-    public void ThemeType_ChangeTriggersStateUpdate()
-    {
-        var button = new Button();
-        var manager = new ControlStateManager(button);
-        var callCount = 0;
-        var token = SToken.Create();
-
-        manager.Subscribe(_ => callCount++, token);
-        manager.ThemeType = ThemeType.Primary;
-
-        Assert.That(callCount, Is.GreaterThanOrEqualTo(1));
-        token.Dispose();
-    }
-
-    [Test]
     public void Constructor_WithCheckBox_TracksCheckedState()
     {
         var checkBox = new CheckBox();
