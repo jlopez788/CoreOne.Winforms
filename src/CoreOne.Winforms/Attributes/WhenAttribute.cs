@@ -14,6 +14,4 @@ public abstract class WhenAttribute(string propertyName, object? expectedValue, 
     ///
     /// </summary>
     public string PropertyName { get; } = propertyName;
-
-    
 }

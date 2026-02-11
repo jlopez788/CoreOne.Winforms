@@ -13,16 +13,15 @@ public class ControlStateManager
     private readonly BehaviorSubject<State> SubjectState;
     private readonly SToken Token = SToken.Create();
     private readonly ToolStripItem? ToolStripItem;
-    private ThemeType PTheme;
     public Rectangle Bounds => GetBoundsFn.Invoke();
     public bool IsChecked { get; private set; }
     public bool IsFocused { get; private set; }
     public bool IsHovered => State == State.HLite;
     public State State => SubjectState.Value;
     public ThemeType ThemeType {
-        get => PTheme;
+        get => field;
         set {
-            PTheme = value;
+            field = value;
             SetState(State);
         }
     }
