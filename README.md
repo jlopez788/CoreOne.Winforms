@@ -42,14 +42,15 @@ A modern, feature-rich WinForms library that provides **dynamic model-based form
 
 ### Advanced Features
 - **Computed Properties** - `[Compute("MethodName")]` executes methods to calculate values
-- **Conditional Enabled** - `[EnabledWhen]` attribute for dynamic control state
-- **Property Watching** - `[WatchProperties]` for reactive property monitoring
-- **Validation support** - Built-in validation with `ValidateModel` extension
-- **Undo/Redo** - `RejectChanges()` and `AcceptChanges()` for change management
-- **Custom attributes** - `[Ignore]`, `[Visible]`, `[Rating]`, and more
-- **Single instance apps** - Built-in support for preventing multiple instances
-- **Dependency injection** - First-class DI support throughout
-- **SOLID architecture** - Clean, maintainable codebase with factory priority system
+- **Conditional Enabling** - `[EnabledWhen]` for dynamic control state
+- **Conditional Visibility** - `[VisibleWhen]` for dynamic control visibility
+- **Conditional Clearing** - `[ClearWhen]` to clear values based on conditions
+- **Property Watching** - `[WatchProperty]` and `[WatchProperties]` for reactive monitoring
+- **File Selection** - `[File(filter, multiselect)]` for file/folder pickers
+- **Validation Support** - Built-in validation with error providers
+- **Change Management** - `RejectChanges()` and `AcceptChanges()` for undo/redo
+- **Dependency Injection** - First-class DI support with `IServiceProvider`
+- **SOLID Architecture** - Clean codebase following SOLID & DRY principles
 
 ## 📦 Installation
 
@@ -88,7 +89,7 @@ public class Customer
     public string Country { get; set; }
     
     [DropdownSource(typeof(StateProvider))]
-    [WatchProperties(nameof(Country))]  // Refreshes when Country changes
+    [WatchProperty(nameof(Country))]  // Refreshes when Country changes
     [GridColumn(GridColumnSpan.Half)]
     public string State { get; set; }
     
@@ -97,6 +98,7 @@ public class Customer
     public bool IsActive { get; set; }
     
     [EnabledWhen(nameof(IsActive), true)]  // Only enabled when IsActive is true
+    [ClearWhen(nameof(IsActive), false)]  // Clears value when IsActive becomes false
     public string ActiveNotes { get; set; }
     
     [Rating(5)]  // Display as 5-star rating control
@@ -105,6 +107,10 @@ public class Customer
     [Compute("CalculateTotalScore")]
     [WatchProperties(nameof(CustomerRating), nameof(IsActive))]
     public decimal TotalScore { get; set; }
+    
+    [File("All Files (*.*)|*.*")]  // File picker control
+    [VisibleWhen(nameof(IsActive), true)]  // Only visible when IsActive is true
+    public string? AttachmentPath { get; set; }
     
     [Ignore]  // Won't generate a control
     public int InternalId { get; set; }
@@ -197,57 +203,55 @@ public class MyForm : Form
 
 ### Creating Custom Dropdown Providers
 
+**Synchronous Provider:**
+
 ```csharp
 using CoreOne.Winforms;
 using CoreOne.Winforms.Models;
 
 public class CountryProvider : IDropdownSourceProviderSync
 {
-    public void Initialize(IWatchHandler context)
-    {
-        // Subscribe to changes, setup refresh logic, etc.
-    }
+    public void Initialize(IWatchHandler context) { }
     
     public IEnumerable<DropdownItem> GetItems(object model)
     {
-        // Fetch from database, API, etc.
-        return new[]
-        {
+        return
+        [
             new DropdownItem("US", "United States"),
             new DropdownItem("CA", "Canada"),
             new DropdownItem("MX", "Mexico")
-        };
+        ];
     }
     
-    public void Dispose()
-    {
-        // Cleanup resources
-    }
+    public void Dispose() { }
 }
+```
 
+**Dependent (Cascading) Provider:**
+
+```csharp
 public class StateProvider : IDropdownSourceProviderSync
 {
     public void Initialize(IWatchHandler context) { }
     
     public IEnumerable<DropdownItem> GetItems(object model)
     {
-        // Access the model to get dependent property value
         var customer = (Customer)model;
         
         return customer.Country switch
         {
-            "US" => new[] 
-            { 
+            "US" => 
+            [
                 new DropdownItem("CA", "California"),
                 new DropdownItem("TX", "Texas"),
                 new DropdownItem("NY", "New York")
-            },
-            "CA" => new[] 
-            { 
+            ],
+            "CA" => 
+            [
                 new DropdownItem("ON", "Ontario"),
                 new DropdownItem("BC", "British Columbia")
-            },
-            _ => Array.Empty<DropdownItem>()
+            ],
+            _ => []
         };
     }
     
@@ -255,123 +259,91 @@ public class StateProvider : IDropdownSourceProviderSync
 }
 ```
 
-### Async Dropdown Provider
+**Async Provider (for API calls):**
 
 ```csharp
-public class ProductCategoriesProvider : IDropdownSourceProviderAsync
+public class ProductCategoriesProvider(HttpClient httpClient) : IDropdownSourceProviderAsync
 {
-    private readonly HttpClient _httpClient;
-    
-    public ProductCategoriesProvider(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
-    
     public void Initialize(IWatchHandler context) { }
     
     public async Task<IEnumerable<DropdownItem>> GetItemsAsync(object model)
     {
-        var response = await _httpClient.GetFromJsonAsync<Category[]>("/api/categories");
-        return response?.Select(c => new DropdownItem(c.Id.ToString(), c.Name)) 
-               ?? Array.Empty<DropdownItem>();
+        var categories = await httpClient.GetFromJsonAsync<Category[]>("/api/categories");
+        return categories?.Select(c => new DropdownItem(c.Id.ToString(), c.Name)) ?? [];
     }
     
-    public void Dispose() 
-    {
-        _httpClient?.Dispose();
-    }
+    public void Dispose() => httpClient?.Dispose();
 }
 ```
 
 ### Creating Custom Watch Handlers
 
-The library uses an extensible handler pipeline for reactive behaviors. You can create custom handlers:
+Extend the library with custom reactive handlers using the `WatchFactoryFromAttribute<TAttribute>` base class:
 
 ```csharp
 using CoreOne.Winforms;
 using CoreOne.Winforms.Services.WatchHandlers;
 
-// 1. Create a custom attribute
-[AttributeUsage(AttributeTargets.Property)]
-public class VisibleWhenAttribute : WatchPropertiesAttribute
+// 1. Create your custom attribute
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+public sealed class CustomWhenAttribute(string propertyName, object? expectedValue) 
+    : WhenAttribute(propertyName, expectedValue)
 {
-    public object ExpectedValue { get; }
-    public string PropertyName { get; }
-    
-    public VisibleWhenAttribute(string propertyName, object expectedValue) 
-        : base(propertyName)
-    {
-        PropertyName = propertyName;
-        ExpectedValue = expectedValue;
-    }
 }
 
-// 2. Create the handler
-public class VisibleWhenHandler : WatchFactoryFromAttribute<VisibleWhenAttribute>, IWatchFactory
+// 2. Create the handler factory
+public class CustomWhenHandler : WatchFactoryFromAttribute<CustomWhenAttribute>
 {
-    private class VisibleWhenHandlerInstance : WatchHandler
+    // Private nested implementation class
+    private class CustomWhenHandlerInstance(PropertyGridItem gridItem, CustomWhenAttribute[] attributes)
+        : WhenHandler(gridItem, attributes)
     {
-        private readonly PropertyGridItem _gridItem;
-        private readonly VisibleWhenAttribute _attribute;
-        private Metadata? _targetProperty;
-        
-        public VisibleWhenHandlerInstance(PropertyGridItem gridItem, VisibleWhenAttribute attr)
-            : base(gridItem.Property)
+        protected override void OnCondition(object model, IReadOnlyList<bool> flags)
         {
-            _gridItem = gridItem;
-            _attribute = attr;
-        }
-        
-        protected override void OnInitialize(object model)
-        {
-            _targetProperty = MetaType.GetMetadata(model.GetType(), _attribute.PropertyName);
-        }
-        
-        protected override void OnRefresh(object model)
-        {
-            if (_targetProperty == null) return;
-            
-            var value = _targetProperty.GetValue(model);
-            var isVisible = Equals(value, _attribute.ExpectedValue);
-            
-            _gridItem.InputControl?.CrossThread(() => 
-                _gridItem.InputControl.Visible = isVisible);
+            // Custom logic when condition changes
+            var shouldApply = flags.All(f => f);
+            PropertyGridItem.InputControl.CrossThread(() => 
+            {
+                PropertyGridItem.InputControl.BackColor = shouldApply 
+                    ? Color.LightGreen 
+                    : Color.White;
+            });
         }
     }
     
     protected override IWatchHandler? OnCreateInstance(
-        PropertyGridItem gridItem, VisibleWhenAttribute[] attributes)
+        PropertyGridItem gridItem, 
+        CustomWhenAttribute[] attributes)
     {
-        return new VisibleWhenHandlerInstance(gridItem, attributes[0]);
+        return new CustomWhenHandlerInstance(gridItem, attributes);
     }
 }
 
-// 3. Register it (happens automatically via AddFormServices if in same assembly)
-// Or manually: services.AddSingleton<IWatchFactory, VisibleWhenHandler>();
+// 3. Register (auto-registered via AddFormServices if in same assembly)
+// Manual: services.AddSingleton<IWatchFactory, CustomWhenHandler>();
 
 // 4. Use it
 public class MyModel
 {
-    public bool ShowAdvanced { get; set; }
+    public bool IsActive { get; set; }
     
-    [VisibleWhen(nameof(ShowAdvanced), true)]
-    public string AdvancedSetting { get; set; }
+    [CustomWhen(nameof(IsActive), true)]
+    public string ActiveField { get; set; }
 }
 ```
 
 ### Monitoring Property Changes
 
 ```csharp
-var token = SToken.Create();
-
-_modelControl.PropertyChanged?.Subscribe(change =>
+// Subscribe to property changes
+var subscription = _modelControl.PropertyChanged?.Subscribe(change =>
 {
-    Console.WriteLine($"Property '{change.PropertyName}' changed from " +
-                     $"'{change.OldValue}' to '{change.NewValue}'");
-}, token);
+    Console.WriteLine($"Property '{change.PropertyName}' changed " +
+                     $"from '{change.OldValue}' to '{change.NewValue}'");
+});
 
-// Later, dispose the token to unsubscribe
-token.Dispose();
+// Later, dispose to unsubscribe
+subscription?.Dispose();
 ```
 
 ### Available Attributes
@@ -380,10 +352,14 @@ token.Dispose();
 |-----------|---------|---------|
 | `[GridColumn(GridColumnSpan)]` | Control column span (1-6) | `[GridColumn(GridColumnSpan.Full)]` |
 | `[DropdownSource(typeof(Provider))]` | Specify dropdown provider | `[DropdownSource(typeof(CountryProvider))]` |
-| `[WatchProperties("prop1", "prop2")]` | Declare property dependencies | `[WatchProperties(nameof(Country))]` |
-| `[EnabledWhen("PropertyName", value)]` | Conditionally enable control | `[EnabledWhen(nameof(IsActive), true)]` |
+| `[WatchProperty("prop")]` | Watch single property | `[WatchProperty(nameof(Country))]` |
+| `[WatchProperties("prop1", "prop2")]` | Watch multiple properties | `[WatchProperties(nameof(FirstName), nameof(LastName))]` |
+| `[EnabledWhen("prop", value, comparison)]` | Conditionally enable control | `[EnabledWhen(nameof(IsActive), true)]` |
+| `[VisibleWhen("prop", value, comparison)]` | Conditionally show/hide control | `[VisibleWhen(nameof(ShowAdvanced), true)]` |
+| `[ClearWhen("prop", value, comparison)]` | Clear value when condition met | `[ClearWhen(nameof(IsActive), false)]` |
 | `[Compute("MethodName")]` | Execute method to compute value | `[Compute("CalculateTotal")]` |
-| `[Rating(maxRating)]` | Display as star rating control | `[Rating(5)]` |
+| `[File(filter, multiselect)]` | File/folder picker control | `[File("Text files (*.txt)|*.txt", false)]` |
+| `[Rating(maxRating)]` | Star rating control | `[Rating(5)]` |
 | `[Ignore]` | Skip property in form generation | `[Ignore]` |
 | `[Visible(bool)]` | Control visibility | `[Visible(false)]` |
 
@@ -452,40 +428,62 @@ rating.ValueChanged += (s, e) =>
 
 ## 🏗️ Architecture
 
-CoreOne.Winforms follows **SOLID principles** with a clean, testable architecture:
+CoreOne.Winforms follows **SOLID & DRY principles** with a clean, extensible architecture:
+
+### Design Patterns
+- **Factory Pattern** - Priority-based chain of responsibility for control/handler creation
+- **Template Method Pattern** - `WatchHandler` base class with `OnInitialize`/`OnRefresh` hooks
+- **Observer Pattern** - Reactive programming with `Subject<T>` for property changes
+- **Strategy Pattern** - Interchangeable animation algorithms (`TransitionLinear`, `TransitionBounce`)
 
 ### Core Services
-- **IModelBinder** - Manages two-way binding between model and controls
-- **IPropertyGridItemFactory** - Creates property grid items with labels
-- **IGridLayoutManager** - Handles 6-column Bootstrap-style grid layout
-- **IRefreshManager** - Coordinates property change notifications across handlers
-- **FormContainerHostService** - Manages hosted form services lifecycle
+- **IModelBinder** - Two-way binding between models and controls
+- **IPropertyGridItemFactory** - Property grid item creation with labels
+- **IGridLayoutManager** - 6-column Bootstrap-style responsive layout
+- **IRefreshManager** - Property change notification coordination
+- **IControlStateManager** - Control state management (Normal/Hover/Pressed)
+- **FormContainerHostService** - Hosted form services lifecycle management
 
-### Extensibility
-- **IControlFactory** - Factory pattern for creating controls based on property types
-  - Priority-based system (higher priority = checked first)
-  - Attribute-based factories (Priority 100+): `[Rating]`, `[DropdownSource]`
-  - Type-based factories (Priority 0): String, Numeric, Boolean, DateTime, Enum
-- **IWatchFactory** - Factory pattern for creating reactive property handlers
-  - `EnabledWhenHandler` - Conditional control enabling
-  - `ComputeHandler` - Computed property values
-  - `DropdownHandler` - Dropdown refresh on dependency changes
-- **Dependency Injection** - Constructor injection throughout
-- **Reactive Programming** - Observable property changes with `Subject<T>`
+### Extensibility Points
+- **IControlFactory** - Control creation based on types/attributes
+  - **Priority 100+**: Attribute-based (`[Rating]`, `[DropdownSource]`, `[File]`)
+  - **Priority 0**: Type-based (String, Numeric, Boolean, DateTime, Enum)
+- **IWatchFactory** - Reactive property watch handlers
+  - `EnabledWhenHandler` - Conditional enabling
+  - `VisibleWhenHandler` - Conditional visibility
+  - `ClearWhenHandler` - Conditional value clearing
+  - `ComputeHandler` - Computed properties
+  - `DropdownHandler` - Cascading dropdown refresh
+- **Dependency Injection** - Constructor injection with `IServiceProvider`
+- **Reactive Programming** - Observable changes with `Subject<T>`
 
 ### Factory Priority System
 
-Control and watch factories use a priority system to determine which factory handles a property:
-- **Priority 100+**: Attribute-based factories (`[Rating]`, `[DropdownSource]`, `[Compute]`)
-- **Priority 0**: Generic type-based factories (String, Numeric, Boolean, DateTime, Enum)
+Factories use a priority-based chain of responsibility to determine property handling:
+- **Priority 100+**: Attribute-based factories (e.g., `[Rating]`, `[File]`, `[DropdownSource]`)
+- **Priority 0**: Type-based factories (e.g., String, Numeric, Boolean, DateTime, Enum)
 
-Custom factories can specify their priority:
+**Custom Factory Example:**
 ```csharp
 public class MyCustomFactory : IControlFactory
 {
-    public int Priority => 50; // Medium priority
-    public bool CanHandle(Metadata property) { /* ... */ }
-    public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged) { /* ... */ }
+    public int Priority => 50;  // Medium priority (checked before type-based)
+    
+    public bool CanHandle(Metadata property) 
+    {
+        // Check if this factory can handle the property
+        return property.PropertyType == typeof(MyCustomType);
+    }
+    
+    public ControlContext? CreateControl(
+        Metadata property, 
+        object model, 
+        Action<object?> onValueChanged) 
+    {
+        // Create and return custom control context
+        var control = new MyCustomControl();
+        return new MyCustomControlContext(control, onValueChanged);
+    }
 }
 ```
 
@@ -493,12 +491,21 @@ public class MyCustomFactory : IControlFactory
 
 The watch handler pipeline enables plug-and-play reactive behaviors:
 
-1. **Discovery**: Handlers are auto-registered via `AddFormServices()`
-2. **Matching**: During binding, handlers check if they can handle each property
-3. **Initialization**: Handler instances are created and initialized
-4. **Execution**: When dependencies change, handlers execute in priority order
+1. **Auto-Discovery**: Handlers register via `AddFormServices()` (scans assembly for `IWatchFactory`)
+2. **Property Matching**: Each factory checks `CanHandle()` during binding
+3. **Handler Creation**: Matching factories create handler instances via `OnCreateInstance()`
+4. **Initialization**: `OnInitialize()` sets up dependencies and metadata
+5. **Reactive Execution**: `OnRefresh()` executes when watched properties change
 
-See [WATCH_CONTEXT_ARCHITECTURE.md](WATCH_CONTEXT_ARCHITECTURE.md) for detailed handler architecture documentation.
+**Template Method Pattern**:
+```csharp
+public abstract class WatchHandler : IWatchHandler
+{
+    protected virtual void OnInitialize(object model) { }  // Setup
+    protected virtual void OnRefresh(object model, bool isFirst) { }  // React to changes
+    protected override void OnDispose() { }  // Cleanup
+}
+```
 
 ## 🤝 Contributing
 

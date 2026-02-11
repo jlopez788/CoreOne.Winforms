@@ -318,7 +318,7 @@ public class PropertyGridItemFactoryTests
         [GridColumn(GridColumnSpan.Full)]
         public string FullWidthField { get; set; } = "";
 
-        [Visible(false)]
+        [VisibleWhen(false)]
         public string HiddenField { get; set; } = "";
     }
 }

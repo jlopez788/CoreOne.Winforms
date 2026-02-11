@@ -62,7 +62,7 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
             Padding = new Padding(0, 0, 20, 0) // Extra padding on right for ErrorProvider icon
         };
 
-        var visible = property.GetCustomAttribute<VisibleAttribute>()?.IsVisible;
+        var visible = property.GetCustomAttribute<VisibleWhenAttribute>()?.IsVisible;
         container.Controls.Add(inputControl);
         container.Controls.Add(label); // Add label last so it appears on top with Dock.Top
 

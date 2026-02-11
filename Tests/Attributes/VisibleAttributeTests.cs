@@ -8,7 +8,7 @@ public class VisibleAttributeTests
     [Test]
     public void Constructor_WithTrueValue_SetsIsVisible()
     {
-        var attribute = new VisibleAttribute(true);
+        var attribute = new VisibleWhenAttribute(true);
         
         Assert.That(attribute.IsVisible, Is.True);
     }
@@ -16,7 +16,7 @@ public class VisibleAttributeTests
     [Test]
     public void Constructor_WithFalseValue_SetsIsVisible()
     {
-        var attribute = new VisibleAttribute(false);
+        var attribute = new VisibleWhenAttribute(false);
         
         Assert.That(attribute.IsVisible, Is.False);
     }
