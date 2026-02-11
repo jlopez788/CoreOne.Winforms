@@ -1,3 +1,455 @@
+## Project Overview
+
+**CoreOne.Winforms** is a modern WinForms library providing dynamic model-based form generation with automatic two-way data binding, extensible handler pipeline, themed controls, and smooth animations. Built for .NET 9.0.
+
+### Key Features
+- Dynamic form generation from model properties via attributes
+- 6-column Bootstrap-style grid layout system
+- Priority-based factory pattern for control creation
+- Reactive property watching and cascading updates
+- Attribute-driven UI behaviors (EnabledWhen, Compute, Validation, etc.)
+- Dependency injection throughout
+- Built on SOLID & DRY principles
+
+## Architecture & Design Principles
+
+### SOLID Principles (Enforced)
+
+#### Single Responsibility Principle
+- Each class has one clear purpose (e.g., `StringControlFactory` only handles string controls)
+- Factories handle only their specific type/attribute
+- Services manage only their designated concern
+
+#### Open/Closed Principle
+- Extensible via interfaces (`IControlFactory`, `IWatchFactory`, `IDropdownSourceProvider`)
+- New functionality added by implementing interfaces, not modifying existing code
+- Priority-based chain of responsibility allows behavior customization
+
+#### Liskov Substitution Principle
+- All implementations properly substitute their interfaces
+- Base classes (`WatchHandler`, `ControlContext`, `Animation`) provide proper abstractions
+- No surprising behavior when using derived types
+
+#### Interface Segregation Principle
+- Small, focused interfaces (e.g., `IControlFactory`, `IRefreshManager`, `IView`)
+- Clients depend only on interfaces they use
+- Separate sync/async providers: `IDropdownSourceProviderSync` vs `IDropdownSourceProviderAsync`
+
+#### Dependency Inversion Principle
+- High-level modules depend on abstractions, not concretions
+- Constructor injection used throughout (e.g., `ModelBinder(IServiceProvider, IRefreshManager, IGridLayoutManager)`)
+- Service provider manages dependencies
+
+### DRY Principle (Enforced)
+
+#### Base Classes for Shared Behavior
+```csharp
+// ✅ Template method pattern - lifecycle hooks
+public abstract class WatchHandler : IWatchHandler
+{
+    protected virtual void OnInitialize(object model) { }
+    protected virtual void OnRefresh(object model, bool isFirst) { }
+}
+
+// ✅ Reusable context base
+public abstract class ControlContext(Control control, Action<object?> setValue) : Disposable
+{
+    protected virtual void OnBindEvent() { }
+    protected virtual void OnUnbindEvent() { }
+}
+```
+
+#### Generic Abstract Base Classes
+```csharp
+// ✅ Eliminate repetition across attribute-based factories
+public abstract class WatchFactoryFromAttribute<TAttribute> : IWatchFactory where TAttribute : Attribute
+{
+    protected virtual bool CanHandle(PropertyGridItem gridItem, TAttribute[] attributes);
+    protected abstract IWatchHandler? OnCreateInstance(PropertyGridItem gridItem, TAttribute[] attributes);
+}
+```
+
+#### Extension Methods for Reusability
+```csharp
+// ✅ Common operations as extensions
+public static class ControlExtension
+{
+    public static void CrossThread(this Control control, Action action) { /* ... */ }
+}
+```
+
+### Design Patterns
+
+#### Factory Pattern (Chain of Responsibility)
+```csharp
+// ✅ Priority-based factory selection
+public interface IControlFactory
+{
+    int Priority => 0;  // 100+ for attribute-based, 0 for type-based
+    bool CanHandle(Metadata property);
+    ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged);
+}
+```
+
+#### Template Method Pattern
+```csharp
+// ✅ Fixed algorithm with customizable steps
+public abstract class WatchHandler
+{
+    public void Refresh(object model)
+    {
+        if (!IsInitialized) OnInitialize(model);
+        OnRefresh(model, isFirst);
+    }
+    
+    protected virtual void OnInitialize(object model) { }
+    protected virtual void OnRefresh(object model, bool isFirst) { }
+}
+```
+
+#### Observer Pattern
+```csharp
+// ✅ Reactive programming with Subject<T>
+public Subject<ModelPropertyChanged> PropertyChanged { get; }
+```
+
+#### Strategy Pattern
+```csharp
+// ✅ Interchangeable algorithms
+public interface ITransitionType { /* ... */ }
+public class TransitionLinear(int duration) : Animation(duration) { }
+public class TransitionBounce : TransitionUserDefined { }
+```
+
+## Naming Conventions
+
+### Fields & Properties
+```csharp
+// ✅ Private fields - PascalCase (not camelCase, not _fieldName)
+private readonly List<IControlFactory> Factories;
+private readonly ErrorProvider ErrorProvider;
+private readonly Lock Sync = new();
+
+// ✅ Private backing fields for properties - PascalCase with 'P' prefix
+private ThemeType PTheme;
+public ThemeType ThemeType {
+    get => PTheme;
+    set { PTheme = value; }
+}
+
+// ✅ Public properties - PascalCase
+public Rectangle Bounds { get; }
+public bool IsChecked { get; private set; }
+
+// ✅ Protected properties - PascalCase
+protected Metadata Checked { get; private set; }
+```
+
+### Methods
+```csharp
+// ✅ All methods - PascalCase (public, protected, private)
+public void BindModel(Control container, object model) { }
+protected virtual void OnInitialize(object model) { }
+private void UpdateSize() { }
+
+// ✅ Template method hooks - On prefix
+protected override void OnBindEvent() { }
+protected override void OnRefresh(object model, bool isFirst) { }
+protected override void OnDispose() { }
+```
+
+### Classes & Interfaces
+```csharp
+// ✅ Interfaces - I prefix, PascalCase
+public interface IControlFactory { }
+public interface IWatchHandler { }
+
+// ✅ Classes - PascalCase
+public class StringControlFactory : IControlFactory { }
+public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute> { }
+
+// ✅ Sealed attributes - sealed keyword
+public sealed class EnabledWhenAttribute : WhenAttribute { }
+
+// ✅ Abstract base classes - abstract keyword
+public abstract class WatchHandler : IWatchHandler { }
+public abstract class ControlContext : Disposable { }
+
+// ✅ Nested private classes - descriptive names
+private class EnabledWhenHandlerInstance : WhenHandler { }
+private sealed class FlickerFreePanel : Control { }
+```
+
+### Parameters & Locals
+```csharp
+// ✅ Parameters - camelCase
+public ControlContext(Control control, Action<object?> setValue) { }
+public void Refresh(object model, bool isFirst) { }
+
+// ✅ Local variables - camelCase
+var textBox = new TextBox();
+var gridItem = CreatePropertyGridItem(property, model);
+```
+
+### Test Classes
+```csharp
+// ✅ Test class naming - ClassNameTests suffix
+public class StringControlFactoryTests { }
+public class EnabledWhenHandlerTests { }
+
+// ✅ Test method naming - MethodName_Scenario_ExpectedBehavior
+[Test]
+public void CanHandle_StringProperty_ReturnsTrue() { }
+
+[Test]
+public void CreateControl_WithValidModel_BindsSuccessfully() { }
+```
+
+## Code Organization
+
+### Project Structure
+```
+src/CoreOne.Winforms/
+├── Attributes/          # Declarative metadata attributes
+├── Controls/            # Custom WinForms controls
+├── Events/              # Event argument classes
+├── Extensions/          # Extension methods
+├── Forms/               # Base form classes
+├── Models/              # Data transfer objects, contexts
+├── Native/              # P/Invoke and Windows API wrappers
+├── Services/            # Business logic and services
+│   ├── ControlFactories/  # Control creation factories
+│   └── WatchHandlers/     # Reactive property watchers
+├── Transitions/         # Animation system
+│   ├── Animations/        # Animation implementations
+│   └── ManagedType/       # Type-specific animation handlers
+└── I*.cs               # Interface definitions at root
+
+Tests/
+├── Attributes/          # Mirror src structure
+├── Controls/
+├── Extensions/
+├── Models/
+├── Services/
+│   ├── ControlFactories/
+│   └── WatchHandlers/
+└── Integration/         # Integration tests
+```
+
+### File Organization Rules
+- One primary public class per file (nested private classes allowed)
+- File name matches the primary class name
+- Test files mirror production structure with "Tests" suffix
+- Interfaces at root or in relevant subfolder
+- Related implementations grouped in subfolders
+
+## Coding Conventions & Patterns
+
+### Constructor Patterns
+```csharp
+// ✅ Primary constructor with dependency injection
+public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager)
+    : Disposable, IModelBinder, IDisposable
+{
+    private readonly List<IControlFactory> Factories = [.. services.GetRequiredService<IEnumerable<IControlFactory>>()];
+}
+
+// ✅ Primary constructor with parameters
+public sealed class EnabledWhenAttribute(string propertyName, object? expectedValue, ComparisonType comparisonType = ComparisonType.EqualTo)
+    : WhenAttribute(propertyName, expectedValue, comparisonType)
+{
+}
+
+// ✅ Abstract classes with constructors
+public abstract class WatchHandler(Metadata property) : IWatchHandler
+{
+    public Metadata Property { get; } = property;
+}
+```
+
+### Disposal Pattern
+```csharp
+// ✅ Inherit from Disposable base class
+public class ModelBinder : Disposable, IModelBinder, IDisposable
+{
+    protected override void OnDispose()
+    {
+        // Cleanup logic
+        GridItems.Each(p => p.Dispose());
+        Transaction?.Dispose();
+    }
+}
+
+// ✅ IDisposable for cleanup
+public abstract class ControlContext : Disposable
+{
+    protected override void OnDispose()
+    {
+        OnUnbindEvent();
+        Control.Dispose();
+    }
+}
+```
+
+### Null Safety & Validation
+```csharp
+// ✅ ArgumentNullException.ThrowIfNull for parameter validation
+public Size BindModel(Control container, object model)
+{
+    ArgumentNullException.ThrowIfNull(model);
+    ArgumentNullException.ThrowIfNull(container);
+    // ...
+}
+
+// ✅ Nullable reference types enabled
+#nullable enable
+public ControlContext? CreateControl(Metadata property, object model, Action<object?> onValueChanged)
+
+// ✅ Null-conditional and null-coalescing operators
+var color = Control?.BackColor ?? ToolStripItem?.BackColor ?? throw new NullReferenceException();
+```
+
+### Collection Initialization
+```csharp
+// ✅ Collection expressions (C# 12)
+private readonly List<PropertyGridItem> GridItems = [];
+private readonly List<IControlFactory> Factories = [.. services.GetRequiredService<IEnumerable<IControlFactory>>()];
+
+// ✅ Collection initializers
+var transitions = new Dictionary<Transition, bool>(50);
+```
+
+### LINQ & Functional Patterns
+```csharp
+// ✅ Method chaining with LINQ
+var factories = Factories.OrderByDescending(f => f.Priority).ToList();
+var properties = MetaType.GetMetadatas(model.GetType())
+    .Where(p => p.CanRead && p.CanWrite)
+    .Where(p => p.GetCustomAttribute<IgnoreAttribute>() is null)
+    .ToList();
+
+// ✅ Extension methods for fluent API
+properties.Each(p => DoSomething(p));
+attributes.SelectMany(p => p.PropertyNames).Each(p => Dependencies.Add(p));
+```
+
+### Async/Await Patterns
+```csharp
+// ✅ ValueTask for performance
+public virtual ValueTask Initialize(CancellationToken cancellationToken) => ValueTask.CompletedTask;
+
+// ✅ Async with proper cancellation
+public async ValueTask Initialize()
+{
+    var tasks = services.SelectArray(p => callback(p, cancellationToken).AsTask());
+    await Task.WhenAll(tasks);
+}
+
+// ✅ ConfigureAwait for library code avoided (removed in modern .NET)
+await SomeMethodAsync(); // No ConfigureAwait needed
+```
+
+### Event Handling
+```csharp
+// ✅ Event subscription/unsubscription
+protected override void OnBindEvent()
+{
+    control.TextChanged += OnTextChanged;
+}
+
+protected override void OnUnbindEvent()
+{
+    control.TextChanged -= OnTextChanged;
+}
+
+// ✅ Reactive programming with Subject<T>
+public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
+PropertyChanged.OnNext(new ModelPropertyChanged(property.Name, current, value));
+```
+
+### Cross-Thread UI Updates
+```csharp
+// ✅ Safe cross-thread control updates
+control.CrossThread(() => {
+    control.Text = "Updated";
+    control.Invalidate();
+});
+
+// ✅ Implementation pattern
+public static void CrossThread(this Control control, Action action)
+{
+    if (control.InvokeRequired)
+        control.Invoke(action);
+    else
+        action();
+}
+```
+
+### Nested Implementation Classes
+```csharp
+// ✅ Private nested classes for implementations
+public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute>
+{
+    private class EnabledWhenHandlerInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes)
+        : WhenHandler(gridItem, attributes)
+    {
+        protected override void OnCondiition(object model, IReadOnlyList<bool> flags)
+        {
+            var shouldEnable = flags.All(f => f);
+            PropertyGridItem.InputControl.Enabled = shouldEnable;
+        }
+    }
+    
+    protected override IWatchHandler? OnCreateInstance(PropertyGridItem gridItem, EnabledWhenAttribute[] attributes)
+        => new EnabledWhenHandlerInstance(gridItem, attributes);
+}
+```
+
+### Attribute Usage
+```csharp
+// ✅ Sealed attributes (leaf nodes in hierarchy)
+public sealed class EnabledWhenAttribute : WhenAttribute { }
+public sealed class FileAttribute : Attribute { }
+
+// ✅ Abstract base attributes (for extension)
+public abstract class WhenAttribute : Attribute { }
+
+// ✅ AttributeUsage specification
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+public sealed class EnabledWhenAttribute : WhenAttribute { }
+
+// ✅ Primary constructor for attributes
+public sealed class FileAttribute(string filter = "All Files (*.*)|*.*", bool multiselect = false) : Attribute
+{
+    public string Filter { get; } = filter;
+    public bool Multiselect { get; } = multiselect;
+}
+```
+
+### Documentation
+```csharp
+// ✅ XML documentation for public APIs
+/// <summary>
+/// Factory interface for creating WinForms controls based on property metadata and attributes.
+/// Factories use a priority-based chain of responsibility pattern.
+/// </summary>
+/// <remarks>
+/// <para><strong>Priority System:</strong></para>
+/// <list type="bullet">
+/// <item><description><strong>100+</strong>: Attribute-based factories</description></item>
+/// <item><description><strong>0</strong>: Generic type-based factories</description></item>
+/// </list>
+/// </remarks>
+public interface IControlFactory
+
+// ✅ Code examples in documentation
+/// <example>
+/// <code>
+/// [EnabledWhen(nameof(IsActive), true)]
+/// public string Notes { get; set; }
+/// </code>
+/// </example>
+```
 
 ## Testing Guidelines
 

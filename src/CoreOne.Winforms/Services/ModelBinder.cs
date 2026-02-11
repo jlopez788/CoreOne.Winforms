@@ -68,7 +68,7 @@ public class ModelBinder(IServiceProvider services, IRefreshManager refreshManag
         }
 
         // Calculate grid layout
-        var itemsWithSpans = GridItems.Select(item => (item.Container as Control, item.ColumnSpan));
+        var itemsWithSpans = GridItems.Select(item => ((Control)item.Container, item.ColumnSpan));
         var gridCells = layoutManager.CalculateLayout(itemsWithSpans);
 
         // Render layout

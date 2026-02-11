@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using CoreOne.Threading.Tasks;
+using System.ComponentModel;
 using System.Drawing.Drawing2D;
 
 namespace CoreOne.Winforms.Controls;
@@ -236,7 +237,7 @@ public class LoadingCircle : Control
 
     public Task<TResult?> GetResultAsync<TResult>(InvokeTask<TResult> callback, CancellationToken cancellationToken = default) => LoadingStore.GetResultAsync(callback, null, cancellationToken);
 
-    public Task InvokeAsync(InvokeTask? callback, CancellationToken cancellationToken = default) => LoadingStore.InvokeAsync(callback, cancellationToken);
+    public Task InvokeAsync(InvokeTask? callback, CancellationToken cancellationToken = default) => LoadingStore.InvokeAsync(new InvokeCallback(callback), cancellationToken);
 
     public void PaintSpinner(Graphics graphics)
     {

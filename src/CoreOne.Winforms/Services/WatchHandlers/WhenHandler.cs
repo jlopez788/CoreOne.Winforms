@@ -25,7 +25,6 @@ public abstract class WhenHandler(PropertyGridItem gridItem, WhenAttribute[] att
     protected override void OnRefresh(object model, bool isFirst)
     {
         PropertyGridItem.InputControl.CrossThread(() => {
-            // All conditions must be satisfied (AND logic)
             var flags = new List<bool>(Attributes.Length);
             foreach (var attr in Attributes)
             {
