@@ -26,7 +26,7 @@ public static class Program
         services.AddSingleton<StateProvider>();
         services.AddSingleton<IndustryProvider>();
 
-        var serviceProvider = services.BuildServiceProvider();
+        using var serviceProvider = services.BuildServiceProvider();
 
         // Create and run main form
         Startup.Run<MainForm>(serviceProvider);

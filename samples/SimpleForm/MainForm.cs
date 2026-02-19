@@ -54,8 +54,8 @@ public partial class MainForm : Form
     {
         Text = "CoreOne.Winforms - Simple Form Example";
         Size = new Size(800, 700);
+        BackColor = Color.White;
         StartPosition = FormStartPosition.CenterScreen;
-        Padding = new Padding(20);
 
         // Add menu strip
         var menuStrip = new MenuStrip();
@@ -124,7 +124,8 @@ public partial class MainForm : Form
             Location = new Point(20, 135),
             Width = 760,
             Height = 460,
-            AutoScroll = true
+            AutoScroll = true,
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
         };
 
         // Subscribe to property changes (reactive pattern)
@@ -176,7 +177,7 @@ public partial class MainForm : Form
                      $"Rating: {customer.CustomerRating} stars\n" +
                      $"Total Score: {customer.TotalScore}\n" +
                      $"Active: {customer.IsActive}\n" +
-                     $"File: {customer.File}\n"+
+                     $"File: {customer.File}\n" +
                      $"\nModified: {(e.IsModified ? "Yes" : "No")}";
 
         MessageBox.Show(

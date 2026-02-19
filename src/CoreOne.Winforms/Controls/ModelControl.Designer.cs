@@ -28,10 +28,41 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            PnlControls = new Panel();
+            PnlView = new Panel();
+            SuspendLayout();
+            // 
+            // PnlControls
+            // 
+            PnlControls.Dock = DockStyle.Bottom;
+            PnlControls.Location = new Point(0, 340);
+            PnlControls.Name = "PnlControls";
+            PnlControls.Size = new Size(500, 40);
+            PnlControls.TabIndex = 0;
+            // 
+            // PnlView
+            // 
+            PnlView.AutoScroll = true;
+            PnlView.Dock = DockStyle.Fill;
+            PnlView.Location = new Point(0, 0);
+            PnlView.Name = "PnlView";
+            PnlView.Size = new Size(500, 340);
+            PnlView.TabIndex = 1;
+            // 
+            // ModelControl
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(PnlView);
+            Controls.Add(PnlControls);
+            Name = "ModelControl";
+            Size = new Size(500, 380);
+            ResumeLayout(false);
         }
 
         #endregion
+
+        private Panel PnlControls;
+        private Panel PnlView;
     }
 }

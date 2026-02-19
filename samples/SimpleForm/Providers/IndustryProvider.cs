@@ -15,8 +15,8 @@ public class IndustryProvider : IDropdownSourceProviderSync
 
     public IEnumerable<DropdownItem> GetItems(object model)
     {
-        return new[]
-        {
+        return
+        [
             new DropdownItem { Display = "Technology", Value = "TECH" },
             new DropdownItem { Display = "Healthcare", Value = "HEALTH" },
             new DropdownItem { Display = "Finance", Value = "FIN" },
@@ -25,7 +25,7 @@ public class IndustryProvider : IDropdownSourceProviderSync
             new DropdownItem { Display = "Education", Value = "EDU" },
             new DropdownItem { Display = "Government", Value = "GOV" },
             new DropdownItem { Display = "Other", Value = "OTHER" }
-        };
+        ];
     }
 
     public void Dispose()

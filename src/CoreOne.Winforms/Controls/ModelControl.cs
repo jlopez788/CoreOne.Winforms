@@ -14,6 +14,7 @@ public partial class ModelControl : UserControl
     public event EventHandler<ModelSavedEventArgs>? SaveClicked;
     private readonly IModelBinder? ModelBinder;
     private readonly IServiceProvider Services = default!;
+    private Size IdealSize = new(1, 1);
     public OButton BtnSave { get; private set; } = default!;
     public bool IsDirty { get; private set; }
     public Subject<ModelPropertyChanged>? PropertyChanged => ModelBinder?.PropertyChanged;
@@ -28,6 +29,16 @@ public partial class ModelControl : UserControl
         ModelBinder = modelBinder;
 
         InitializeComponent();
+
+        AddSaveButton(PnlControls.Size);
+
+        //PnlView.BackColor = Color.DarkOrchid;
+        PnlView.MouseEnter += (s, e) => PnlView.Invalidate();
+        PnlView.MouseLeave += (s, e) => PnlView.Invalidate();
+        PnlView.Paint += (s, e) => {
+            using var pen = new SolidBrush(Color.Red);
+            e.Graphics.FillRectangle(pen, PnlView.Width - 10, 0, 10, IdealSize.Height);
+        };
     }
 
     public void AcceptChanges()
@@ -52,24 +63,12 @@ public partial class ModelControl : UserControl
     /// </summary>
     public void SetModel<T>(T model) where T : class
     {
-        this.ClearControls();
-        var idealSize = ModelBinder?.BindModel(this, model);
+        PnlView.ClearControls();
+        IdealSize = ModelBinder?.BindModel(PnlView, model) ?? new Size(1, 1);
         var token = SToken.Create();
 
         IsDirty = false;
         ModelBinder?.PropertyChanged.Subscribe(_ => IsDirty = true, token);
-        // Add Save button at the bottom
-        if (idealSize.HasValue)
-        {
-            AddSaveButton(idealSize.Value);
-        }
-    }
-
-    protected override void OnResize(EventArgs e)
-    {
-        base.OnResize(e);
-
-        MoveButtons();
     }
 
     protected virtual void OnSaveClicked()
@@ -99,20 +98,10 @@ public partial class ModelControl : UserControl
         };
 
         // Center the button horizontally
-        BtnSave.Location = new Point((Width / 2) - (BtnSave.Width / 2), contentSize.Height + 26);
+        BtnSave.Location = new Point((contentSize.Width / 2) - (BtnSave.Width / 2), contentSize.Height / 2 - BtnSave.Height / 2);
         BtnSave.Click += (s, e) => OnSaveClicked();
 
-        Controls.Add(BtnSave);
+        PnlControls.Controls.Add(BtnSave);
         BtnSave.BringToFront();
-        MoveButtons();
-    }
-
-    private void MoveButtons()
-    {
-        if (BtnSave is null)
-            return;
-
-        var buttonLeft = (Width / 2) - (BtnSave.Width / 2);
-        BtnSave.Location = new Point(buttonLeft, BtnSave.Location.Y);
     }
 }

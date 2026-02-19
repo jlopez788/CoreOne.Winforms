@@ -14,6 +14,7 @@ public class DropdownHandler(IServiceProvider services) : WatchFactoryFromAttrib
 
         private void RefreshItems(IEnumerable<DropdownItem> items)
         {
+            gridItem.ControlContext.UnbindEvent();
             ArgumentNullException.ThrowIfNull(items);
 
             var itemList = items.ToList();
@@ -24,6 +25,7 @@ public class DropdownHandler(IServiceProvider services) : WatchFactoryFromAttrib
                 ComboBox.DisplayMember = nameof(DropdownItem.Display);
                 RestoreSelection(previousValue, itemList);
             });
+            gridItem.ControlContext.BindEvent();
         }
 
         private async Task RefreshItemsAsync(object model)
