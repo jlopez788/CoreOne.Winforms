@@ -34,7 +34,7 @@ public class PropertyGridItem(ControlContext controlContext, Metadata property, 
     /// </summary>
     public Metadata Property { get; set; } = property;
 
-    private string Display => $"{Property.Name} <{InputControl.GetType().Name}> ({ColumnSpan})";
+    private string Display => $"[{(int)ColumnSpan}] {Property.Name} :: {InputControl.GetType().Name}";
 
     public void SetValue(object? value) => setValue?.Invoke(value);
 
@@ -42,9 +42,11 @@ public class PropertyGridItem(ControlContext controlContext, Metadata property, 
     {
         Utility.Try(() => {
             ControlContext.Dispose();
-            Label.Dispose();
-            InputControl.Dispose();
-            Container.Dispose();
+            Label.CrossThread(() => {
+                Label.Dispose();
+                InputControl.Dispose();
+                Container.Dispose();
+            });
         });
     }
 }

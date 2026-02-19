@@ -1,5 +1,4 @@
-﻿using CoreOne.Reactive;
-using CoreOne.Winforms.Events;
+﻿using CoreOne.Winforms.Events;
 
 namespace CoreOne.Winforms.Controls;
 
@@ -14,10 +13,10 @@ public partial class ModelControl : UserControl
     public event EventHandler<ModelSavedEventArgs>? SaveClicked;
     private readonly IModelBinder? ModelBinder;
     private readonly IServiceProvider Services = default!;
+    private ModelContext? Current;
     private Size IdealSize = new(1, 1);
     public OButton BtnSave { get; private set; } = default!;
-    public bool IsDirty { get; private set; }
-    public Subject<ModelPropertyChanged>? PropertyChanged => ModelBinder?.PropertyChanged;
+    public bool IsDirty => Current?.IsModified ?? false;
 
     public ModelControl()
     {
@@ -31,49 +30,52 @@ public partial class ModelControl : UserControl
         InitializeComponent();
 
         AddSaveButton(PnlControls.Size);
-
-        //PnlView.BackColor = Color.DarkOrchid;
-        PnlView.MouseEnter += (s, e) => PnlView.Invalidate();
-        PnlView.MouseLeave += (s, e) => PnlView.Invalidate();
-        PnlView.Paint += (s, e) => {
-            using var pen = new SolidBrush(Color.Red);
-            e.Graphics.FillRectangle(pen, PnlView.Width - 10, 0, 10, IdealSize.Height);
-        };
     }
 
     public void AcceptChanges()
     {
-        IsDirty = false;
-        ModelBinder?.Commit();
+        Current?.Commit();
     }
 
     /// <summary>
     /// Gets the currently bound model
     /// </summary>
-    public T? GetModel<T>() where T : class => ModelBinder?.GetBoundModel() as T;
+    public T? GetModel<T>() where T : class => Current?.Model as T;
 
     public void RejectChanges()
     {
-        IsDirty = false;
-        ModelBinder?.Rollback();
+        Current?.Rollback();
     }
 
     /// <summary>
     /// Sets the model and generates controls for its properties
     /// </summary>
-    public void SetModel<T>(T model) where T : class
+    public void SetModel(ModelContext context)
     {
-        PnlView.ClearControls();
-        IdealSize = ModelBinder?.BindModel(PnlView, model) ?? new Size(1, 1);
-        var token = SToken.Create();
+        ArgumentNullException.ThrowIfNull(context);
 
-        IsDirty = false;
-        ModelBinder?.PropertyChanged.Subscribe(_ => IsDirty = true, token);
+        // Store the context
+        Current = context;
+
+        // Clear only the data container, not PnlControls
+        PnlView.ClearControls();
+
+        // Bind the model and get the container
+        var container = ModelBinder?.BindModel(context);
+        if (container is null)
+            return;
+
+        container.Dock = DockStyle.Fill;
+        PnlView.Controls.Add(container);
+        container.BringToFront();
+
+        // Ensure PnlControls is on top
+        PnlControls.BringToFront();
     }
 
     protected virtual void OnSaveClicked()
     {
-        var model = ModelBinder?.GetBoundModel();
+        var model = Current?.Model;
         if (model is not null)
         {
             var validation = model.ValidateModel(Services, true);
@@ -89,8 +91,8 @@ public partial class ModelControl : UserControl
         BtnSave = new OButton {
             Text = "Save",
             Width = 120,
-            Height = 35,
-            Anchor = AnchorStyles.Top,
+            Height = 30,
+            Anchor = AnchorStyles.Bottom,
             BackColor = Color.FromArgb(0, 120, 215),
             ForeColor = Color.White,
             Cursor = Cursors.Hand,
@@ -103,5 +105,9 @@ public partial class ModelControl : UserControl
 
         PnlControls.Controls.Add(BtnSave);
         BtnSave.BringToFront();
+
+        var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Hello");
+        BtnSave.ContextMenuStrip = contextMenu;
     }
 }

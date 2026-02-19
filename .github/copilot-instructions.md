@@ -410,6 +410,7 @@ public class EnabledWhenHandler : WatchFactoryFromAttribute<EnabledWhenAttribute
 // ✅ Sealed attributes (leaf nodes in hierarchy)
 public sealed class EnabledWhenAttribute : WhenAttribute { }
 public sealed class FileAttribute : Attribute { }
+public sealed class GroupAttribute : Attribute { }
 
 // ✅ Abstract base attributes (for extension)
 public abstract class WhenAttribute : Attribute { }
@@ -418,11 +419,30 @@ public abstract class WhenAttribute : Attribute { }
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public sealed class EnabledWhenAttribute : WhenAttribute { }
 
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class GroupAttribute(string title) : Attribute
+{
+    public string Title { get; } = title;
+}
+
 // ✅ Primary constructor for attributes
 public sealed class FileAttribute(string filter = "All Files (*.*)|*.*", bool multiselect = false) : Attribute
 {
     public string Filter { get; } = filter;
     public bool Multiselect { get; } = multiselect;
+}
+
+// ✅ Usage example - Grouping related properties
+public class Customer
+{
+    [Group("Personal Information")]
+    public string FirstName { get; set; }
+    
+    [Group("Personal Information")]
+    public string LastName { get; set; }
+    
+    [Group("Contact Details")]
+    public string Email { get; set; }
 }
 ```
 

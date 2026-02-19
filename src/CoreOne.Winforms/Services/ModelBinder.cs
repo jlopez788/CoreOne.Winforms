@@ -1,130 +1,102 @@
 using CoreOne.Reactive;
-using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Events;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace CoreOne.Winforms.Services;
 
 /// <summary>
 /// Manages binding between model properties and controls using a 6-column grid layout
 /// </summary>
-public class ModelBinder(IServiceProvider services, IRefreshManager refreshManager, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
+public class ModelBinder(IServiceProvider services, IGridLayoutManager layoutManager) : Disposable, IModelBinder, IDisposable
 {
     private readonly ErrorProvider ErrorProvider = new();
-    private readonly List<IControlFactory> Factories = [.. services.GetRequiredService<IEnumerable<IControlFactory>>()];
-    private readonly List<PropertyGridItem> GridItems = [];
-    private readonly List<IWatchFactory> Handlers = [.. services.GetRequiredService<IEnumerable<IWatchFactory>>()];
-    private ModelTransaction? Transaction;
+    private readonly List<IControlFactory> Factories = [.. services.GetRequiredService<IEnumerable<IControlFactory>>().OrderByDescending(p => p.Priority)];
+    private readonly List<IWatchFactory> Handlers = [.. services.GetRequiredService<IEnumerable<IWatchFactory>>().OrderByDescending(p => p.Priority)];
 
     public Subject<ModelPropertyChanged> PropertyChanged { get; } = new();
 
-    public Size BindModel(Control container, object model)
+    public Panel BindModel(ModelContext context)
     {
-        ArgumentNullException.ThrowIfNull(model);
-        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(context);
 
-        UnbindModel();
-
-        Transaction = new ModelTransaction(model);
-
-        var itemFactory = services.GetRequiredService<IPropertyGridItemFactory>();
-        var factories = Factories.OrderByDescending(f => f.Priority).ToList();
-        var properties = MetaType.GetMetadatas(model.GetType(), BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)
-            .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<IgnoreAttribute>() is null)
-            .ToList();
-        var handlers = Handlers.OrderByDescending(p => p.Priority).ToList();
         ErrorProvider.Clear();
-        foreach (var property in properties)
+
+        var model = context.Model;
+        var propertyGroups = context.GetGroupEntries();
+        var itemFactory = services.GetRequiredService<IPropertyGridItemFactory>();
+        var allGroups = new List<(Control control, GridColumnSpan columnSpan)>();
+        foreach (var group in propertyGroups)
         {
-            var controlFactory = factories.FirstOrDefault(p => p.CanHandle(property));
-            if (controlFactory is null)
-                continue;
-
-            var gridItem = itemFactory.CreatePropertyGridItem(controlFactory, property, model, value => {
-                var current = property.GetValue(Transaction.Model);
-                if (Equals(current, value))
-                    return;
-
-                UpdateModelProperty(property, value);
-
-                var args = new ModelPropertyChanged(property, Transaction.Model, value);
-                PropertyChanged.OnNext(args);
-
-                // Notify dropdown refresh manager
-                refreshManager.NotifyPropertyChanged(model, property.Name, value);
-            }, ErrorProvider);
-
-            if (gridItem != null)
+            var groupItems = new List<PropertyGridItem>();
+            foreach (var property in group.Properties)
             {
-                handlers
-                    .OrderByDescending(p => p.Priority)
-                    .Select(p => p.CreateInstance(gridItem))
-                    .ExcludeNulls()
-                    .Each(p => refreshManager.RegisterContext(p, model));
+                var controlFactory = Factories.FirstOrDefault(p => p.CanHandle(property));
+                if (controlFactory is null)
+                    continue;
 
-                GridItems.Add(gridItem);
+                var gridItem = itemFactory.CreatePropertyGridItem(controlFactory, property, model, value => onValueChanged(property, value), ErrorProvider);
+                if (gridItem != null)
+                {
+                    Handlers
+                        .Select(p => p.CreateInstance(gridItem))
+                        .ExcludeNulls()
+                        .Each(p => context.RegisterContext(p, model));
+
+                    groupItems.Add(gridItem);
+                }
+            }
+
+            var (control, height) = layoutManager.RenderLayout(groupItems);
+            if (height > 0)
+            {
+                // control.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+                if (group.GroupId != GroupDetail.GROUP_ID)
+                {
+                    var gc = context.GetGroup(group.GroupId);
+                    var groupBox = new GroupBox {
+                        Text = gc?.Title ?? "<>",
+                        Size = new Size(control.Width + 20, control.Height + 52),
+                        Dock = DockStyle.Fill
+                    };
+                    var span = context.GetGridColumnSpan(group.GroupId);
+                    control.Dock = DockStyle.Fill;
+                    groupBox.Controls.Add(control);
+                    allGroups.Add((groupBox, span));
+                }
+                else
+                {
+                    allGroups.Add((control, context.GetGridColumnSpan(group.GroupId)));
+                }
             }
         }
 
-        // Calculate grid layout
-        var itemsWithSpans = GridItems.Select(item => ((Control)item.Container, item.ColumnSpan));
-        var gridCells = layoutManager.CalculateLayout(itemsWithSpans);
+        var cells = layoutManager.CalculateLayout(allGroups);
+        var (flow, outerHeight) = layoutManager.RenderLayout(cells);
+        flow.ParentChanged += (s, e) => ErrorProvider.ContainerControl = flow.FindForm();
+        //flow.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
+        return flow;
 
-        // Render layout
-        var (layoutPanel, height) = layoutManager.RenderLayout(gridCells);
-
-        container.Controls.Add(layoutPanel);
-
-        // Set ErrorProvider's ContainerControl to enable icon display
-        ErrorProvider.ContainerControl = container as ContainerControl ?? container.FindForm();
-
-        // Calculate ideal size
-        return new Size(container.Width, height);
-    }
-
-    public void Commit() => Transaction?.Commit();
-
-    public object? GetBoundModel() => Transaction?.Model;
-
-    public void Rollback()
-    {
-        if (Transaction is null)
-            return;
-
-        Transaction.Rollback();
-        foreach (var item in GridItems)
+        void onValueChanged(Metadata property, object? value)
         {
-            item.ControlContext.UnbindEvent();
+            var current = property.GetValue(context.Model);
+            if (Equals(current, value))
+                return;
 
-            var value = item.Property.GetValue(Transaction.Model);
-            refreshManager.NotifyPropertyChanged(Transaction.Model, item.Property.Name, value);
-            item.ControlContext.UpdateValue(value);
-            item.ControlContext.BindEvent();
+            property.SetValue(context.Model, value);
+
+            var args = new ModelPropertyChanged(property, context.Model, value);
+            PropertyChanged.OnNext(args);
+
+            // Notify dropdown refresh manager
+            context.NotifyPropertyChanged(model, property.Name, value);
         }
-    }
-
-    public void UnbindModel()
-    {
-        GridItems.Each(p => p.Dispose());
-        GridItems.Clear();
-        refreshManager.Clear();
-        Transaction?.Dispose();
-        Transaction = null;
     }
 
     protected override void OnDispose()
     {
         PropertyChanged.Dispose();
         ErrorProvider.Dispose();
+
         base.OnDispose();
-    }
-
-    private void UpdateModelProperty(Metadata property, object? value)
-    {
-        if (Transaction?.Model is null)
-            return;
-
-        property.SetValue(Transaction.Model, value);
     }
 }

@@ -14,7 +14,6 @@ public static class ServiceProviderExtensions
             .AddControlFactoriesFromTypeAssembly<IControlFactory>()
             .AddWatchHandlersFromTypeAssembly<IWatchFactory>()
             .AddSingleton<FormContainerHostService>()
-            .AddSingleton<IRefreshManager, RefreshManager>()
             .AddSingleton<IPropertyGridItemFactory, PropertyGridItemFactory>()
             .AddSingleton<IGridLayoutManager, GridLayoutManager>()
             .AddSingleton<IModelBinder, ModelBinder>()

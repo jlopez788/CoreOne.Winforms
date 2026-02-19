@@ -50,9 +50,7 @@
             PnlView.TabIndex = 1;
             // 
             // ModelControl
-            // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
+            //  
             Controls.Add(PnlView);
             Controls.Add(PnlControls);
             Name = "ModelControl";

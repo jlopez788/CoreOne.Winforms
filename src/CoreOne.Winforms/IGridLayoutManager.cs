@@ -5,10 +5,12 @@ public interface IGridLayoutManager
     /// <summary>
     /// Calculates grid positions for controls with their column spans
     /// </summary>
-    IEnumerable<GridCell> CalculateLayout(IEnumerable<(Control Control, GridColumnSpan ColumnSpan)> items);
+    List<GridCell> CalculateLayout(IEnumerable<(Control control, GridColumnSpan columnSpan)> items);
+
+    (TableLayoutPanel view, int height) RenderLayout(IEnumerable<GridCell> cells);
 
     /// <summary>
-    /// Renders the grid layout into the container
+    /// Renders layout with support for grouping controls into GroupBox containers
     /// </summary>
-    (TableLayoutPanel view, int height) RenderLayout(IEnumerable<GridCell> gridCells);
+    (TableLayoutPanel view, int height) RenderLayout(IEnumerable<PropertyGridItem> items);
 }

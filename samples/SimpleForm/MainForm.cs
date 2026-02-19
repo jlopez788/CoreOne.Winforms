@@ -4,6 +4,7 @@ using CoreOne.Reactive;
 using CoreOne.Winforms;
 using CoreOne.Winforms.Controls;
 using CoreOne.Winforms.Events;
+using CoreOne.Winforms.Models;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleFormExample.Models;
 
@@ -58,7 +59,10 @@ public partial class MainForm : Form
         StartPosition = FormStartPosition.CenterScreen;
 
         // Add menu strip
-        var menuStrip = new MenuStrip();
+        var menuStrip = new MenuStrip {
+            Location = new Point(0, 0),
+            Dock = DockStyle.Top
+        };
         var fileMenu = new ToolStripMenuItem("File");
         fileMenu.DropDownItems.Add(new ToolStripMenuItem("New", null, (s, e) => LoadCustomer()));
         fileMenu.DropDownItems.Add(new ToolStripMenuItem("Reset", null, (s, e) => ResetForm()));
@@ -121,11 +125,11 @@ public partial class MainForm : Form
 
         // Create new ModelControl
         _modelControl = new ModelControl(_services, _modelBinder) {
-            Location = new Point(20, 135),
-            Width = 760,
+            Location = new Point(10, 135),
+            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+            Width = ClientRectangle.Width - 20,
             Height = 460,
-            AutoScroll = true,
-            Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+            AutoScroll = true
         };
 
         // Subscribe to property changes (reactive pattern)
@@ -134,15 +138,29 @@ public partial class MainForm : Form
         //    MessageBox.Show(builder.ToString(), "Updates", MessageBoxButtons.OK);
         //    builder.Clear();
         //}, 1500);
-        _modelControl.PropertyChanged?.Subscribe(change => {
-            Console.WriteLine($"Property changed: {change.Property.Name} = {change.NewValue}");
+        //_modelControl.PropertyChanged?.Subscribe(change => {
+        //    Console.WriteLine($"Property changed: {change.Property.Name} = {change.NewValue}");
 
-            //builder.AppendLine($"Property changed: {change.Property.Name} = {change.NewValue}");
-            //bounce.Invoke();
-        }, Token);
+        //    //builder.AppendLine($"Property changed: {change.Property.Name} = {change.NewValue}");
+        //    //bounce.Invoke();
+        //}, Token);
 
         _modelControl.SaveClicked += OnSaveClicked;
-        _modelControl.SetModel(_customer);
+
+        var context = new ModelContext(_customer)
+            .AddGroup(new GroupDetail(1, "Encrypted", 10, GridColumnSpan.Full))
+            .AddGroup(new GroupDetail(2, "Personal Information", 15, GridColumnSpan.Half))
+            .AddGroup(new GroupDetail(3, "Contact", 60, GridColumnSpan.Half))
+            .AddGroup(new GroupDetail(4, "Location", 70, GridColumnSpan.Half))
+            .AddGroup(new GroupDetail(5, "Job?", 80, GridColumnSpan.Half))
+            .AddGroup(new GroupDetail(6, "Active", 95, GridColumnSpan.Half))
+            .AddGroup(new GroupDetail(7, "Score", 90, GridColumnSpan.Half))
+            ;
+
+        context.PropertyChanged.Subscribe(change => {
+            Console.WriteLine($"Property changed: {change.Property.Name} = {change.NewValue}");
+        }, Token);
+        _modelControl.SetModel(context);
 
         Controls.Add(_modelControl);
 

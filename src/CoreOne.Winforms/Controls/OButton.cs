@@ -7,11 +7,18 @@ namespace CoreOne.Winforms.Controls;
 
 public class OButton : Control, IButtonControl
 {
-    public event EventHandler? ButtonClick;
     private readonly LoadingCircle Loading;
     private readonly ControlStateManager StateManager;
     private readonly SToken Token;
-    private int _SplitWidth = 24;
+    private HoverRegion CurrentHoverRegion = HoverRegion.None;
+
+    private enum HoverRegion
+    {
+        None,
+        Main,
+        Chevron
+    }
+
     [DefaultValue(0)]
     [RefreshProperties(RefreshProperties.Repaint)]
     public int Border { get; set; }
@@ -23,9 +30,12 @@ public class OButton : Control, IButtonControl
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
     [RefreshProperties(RefreshProperties.Repaint)]
     public int SplitWidth {
-        get => _SplitWidth;
-        set { _SplitWidth = value; Invalidate(); }
-    }
+        get => field;
+        set {
+            field = value;
+            Invalidate();
+        }
+    } = 24;
     [RefreshProperties(RefreshProperties.Repaint)]
     public ThemeType ThemeType {
         get => StateManager.ThemeType;
@@ -56,11 +66,7 @@ public class OButton : Control, IButtonControl
 
     public void NotifyDefault(bool value) => Invalidate();
 
-    public void PerformClick()
-    {
-        OnClick(EventArgs.Empty);
-        OnButtonClicked();
-    }
+    public void PerformClick() => OnClick(EventArgs.Empty);
 
     protected override void Dispose(bool disposing)
     {
@@ -68,12 +74,20 @@ public class OButton : Control, IButtonControl
         base.Dispose(disposing);
     }
 
-    protected virtual void OnButtonClicked()
+    protected override void OnClick(EventArgs e)
     {
-        ButtonClick?.Invoke(this, EventArgs.Empty);
+        if (e is MouseEventArgs me && IsMenuClicked(me))
+        {// If the click is from the dropdown area, show the context menu instead of performing the button click action
+            return;
+        }
+
         if (Clicked != null)
         {
             Loading.InvokeAsync(Clicked, Token);
+        }
+        else
+        {
+            base.OnClick(EventArgs.Empty);
         }
     }
 
@@ -82,7 +96,6 @@ public class OButton : Control, IButtonControl
         if (!IsMenuClicked(e))
         {
             Focus();
-            OnButtonClicked();
             MouseEvent(base.OnMouseClick, e);
         }
     }
@@ -100,6 +113,45 @@ public class OButton : Control, IButtonControl
         if (!IsMenuClicked(e))
         {
             MouseEvent(base.OnMouseUp, e);
+        }
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        UpdateHoverRegion(e.Location);
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        if (e is MouseEventArgs me)
+        {
+            UpdateHoverRegion(me.Location);
+        }
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        CurrentHoverRegion = HoverRegion.None;
+        Invalidate();
+    }
+
+    private void UpdateHoverRegion(Point location)
+    {
+        var newRegion = HoverRegion.Main;
+
+        if (ContextMenuStrip?.Items.Count > 0 && SplitWidth > 0)
+        {
+            var splitView = SplitView;
+            newRegion = splitView.Contains(location) ? HoverRegion.Chevron : HoverRegion.Main;
+        }
+
+        if (CurrentHoverRegion != newRegion)
+        {
+            CurrentHoverRegion = newRegion;
+            Invalidate();
         }
     }
 
@@ -181,20 +233,48 @@ public class OButton : Control, IButtonControl
         g.SetClip(path, CombineMode.Intersect);
         if (StateManager.State == State.HLite)
         {
-            var pressed = StateManager.State == State.Pressed;
-            var glowColor = backColor.DarkenOnLightLerp(0.15f).SetAlpha(180);
-            var fillNorth = pressed ? Color.FromArgb(150, backColor) : glowColor.SetAlpha(60);
-            var fillSouth = pressed ? Color.FromArgb(10, backColor) : glowColor.SetAlpha(1);
-            using (Brush b = new LinearGradientBrush(viewport, fillNorth, fillSouth, LinearGradientMode.Vertical))
+            // Determine which region to highlight
+            Rectangle highlightRect = viewport;
+            bool hasChevron = ContextMenuStrip?.Items.Count > 0 && SplitWidth > 0;
+            if (hasChevron)
             {
-                g.FillPath(b, path);
+                // Only highlight the specific region where the mouse is
+                if (CurrentHoverRegion == HoverRegion.Main)
+                {
+                    // Highlight only the main button area (left side)
+                    highlightRect = new Rectangle(viewport.X, viewport.Y, viewport.Width - SplitWidth, viewport.Height);
+                }
+                else if (CurrentHoverRegion == HoverRegion.Chevron)
+                {
+                    // Highlight only the chevron area (right side)
+                    highlightRect = new Rectangle(viewport.X + viewport.Width - SplitWidth, viewport.Y, SplitWidth, viewport.Height);
+                }
+                else
+                {
+                    // No hover, don't highlight
+                    g.ResetClip();
+                    return;
+                }
             }
 
-            var bv = viewport;
+            // Create a clip region for the highlight area
+            using var highlightPath = Drawings.RoundRect(highlightRect, radius);
+            g.SetClip(highlightPath, CombineMode.Intersect);
+
+            var pressed = StateManager.State == State.Pressed;
+            var glowColor = backColor.DarkenOnLightLerp(0.2f).SetAlpha(180);
+            var fillNorth = pressed ? Color.FromArgb(150, backColor) : glowColor.SetAlpha(60);
+            var fillSouth = pressed ? Color.FromArgb(10, backColor) : glowColor.SetAlpha(1);
+            using (Brush b = new LinearGradientBrush(highlightRect, fillNorth, fillSouth, LinearGradientMode.Vertical))
+            {
+                g.FillRectangle(b, highlightRect);
+            }
+
+            var bv = highlightRect;
             using GraphicsPath brad = CreateBottomRadialPath(bv);
             using PathGradientBrush pgr = new PathGradientBrush(brad);
             var bounds = brad.GetBounds();
-            pgr.CenterPoint = new PointF((bounds.Left + bounds.Right) / 2f, bv.Height);
+            pgr.CenterPoint = new PointF((bounds.Left + bounds.Right) / 2f, (bounds.Top + bounds.Bottom) / 2f);
             pgr.CenterColor = glowColor.SetAlpha(200);
             pgr.SurroundColors = [Color.FromArgb(0, glowColor)];
             pgr.FocusScales = new PointF(0, 0);

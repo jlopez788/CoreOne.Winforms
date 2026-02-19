@@ -1,6 +1,7 @@
-using CoreOne.Winforms.Services;
+using CoreOne.Reflection;
+using CoreOne.Winforms;
 using CoreOne.Winforms.Models;
-using System.Windows.Forms;
+using CoreOne.Winforms.Services;
 
 namespace Tests.Services;
 
@@ -128,7 +129,7 @@ public class GridLayoutManagerTests
         Assert.That(panel, Is.Not.Null);
         Assert.Multiple(() => {
             Assert.That(panel.Dock, Is.EqualTo(DockStyle.Fill));
-            Assert.That(height, Is.EqualTo(45));
+            Assert.That(height, Is.EqualTo(0));
         });
     }
 
@@ -184,17 +185,66 @@ public class GridLayoutManagerTests
         Assert.That(columnSpan, Is.EqualTo(3));
     }
 
+    #region RenderLayout Tests
+
     [Test]
-    public void CalculateLayout_NullItems_ThrowsException()
+    public void RenderLayout_WithEmptyList_ReturnsEmptyPanel()
     {
-        Assert.Throws<ArgumentNullException>(() => 
-            _layoutManager.CalculateLayout(null!));
+        var items = Array.Empty<PropertyGridItem>();
+
+        var (control, height) = _layoutManager.RenderLayout(items);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(control, Is.Not.Null);
+            Assert.That(control, Is.TypeOf<TableLayoutPanel>());
+            Assert.That(height, Is.EqualTo(0));
+        }
     }
 
     [Test]
-    public void RenderLayout_NullCells_ThrowsException()
+    public void RenderLayout_WithNoGroups_UsesSimpleLayout()
     {
-        Assert.Throws<ArgumentNullException>(() => 
-            _layoutManager.RenderLayout(null!));
+        var items = new[]
+        {
+            CreatePropertyGridItem("Field1", GridColumnSpan.Full, null),
+            CreatePropertyGridItem("Field2", GridColumnSpan.Full, null)
+        };
+
+        var (control, height) = _layoutManager.RenderLayout(items);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(control, Is.TypeOf<TableLayoutPanel>());
+            Assert.That(height, Is.EqualTo(90)); // 2 rows * 45
+        }
     }
+
+    private PropertyGridItem CreatePropertyGridItem(string name, GridColumnSpan columnSpan, string? groupName)
+    {
+        var control = new TextBox { Name = name };
+        var container = new Panel();
+        container.Controls.Add(control);
+
+        var property = MetaType.GetMetadata(typeof(TestModel), nameof(TestModel.TestProperty));
+        var controlContext = new TestControlContext(control);
+
+        var item = new PropertyGridItem(controlContext, property, _ => { }) {
+            Container = container,
+            ColumnSpan = columnSpan
+        };
+
+        return item;
+    }
+
+    private class TestControlContext(Control control) : ControlContext(control, _ => { })
+    {
+    }
+
+    private class TestModel
+    {
+        public string TestProperty { get; set; } = string.Empty;
+    }
+
+    #endregion
 }

@@ -16,6 +16,7 @@ A modern, feature-rich WinForms library that provides **dynamic model-based form
 ### Smart Grid Layout
 - **6-column Bootstrap-style grid** - Responsive layout system
 - **`[GridColumn]` attribute** - Control field width (1-6 columns)
+- **`[Group]` attribute** - Group related properties in labeled GroupBox containers
 - **Auto-sizing** - Calculates ideal form dimensions
 - **Labels above controls** - Clean, modern layout
 
@@ -75,39 +76,50 @@ using CoreOne.Winforms.Attributes;
 
 public class Customer
 {
+    [Group("Personal Information")]
     [GridColumn(GridColumnSpan.Half)]  // Takes 3 columns (half of 6)
     public string FirstName { get; set; }
     
+    [Group("Personal Information")]
     [GridColumn(GridColumnSpan.Half)]
     public string LastName { get; set; }
     
+    [Group("Personal Information")]
+    public DateTime BirthDate { get; set; }
+    
+    [Group("Contact Details")]
     [GridColumn(GridColumnSpan.Full)]  // Takes all 6 columns
     public string Email { get; set; }
     
+    [Group("Location")]
     [DropdownSource(typeof(CountryProvider))]
     [GridColumn(GridColumnSpan.Half)]
     public string Country { get; set; }
     
+    [Group("Location")]
     [DropdownSource(typeof(StateProvider))]
     [WatchProperty(nameof(Country))]  // Refreshes when Country changes
     [GridColumn(GridColumnSpan.Half)]
     public string State { get; set; }
     
-    public DateTime BirthDate { get; set; }
-    
+    [Group("Status")]
     public bool IsActive { get; set; }
     
+    [Group("Status")]
     [EnabledWhen(nameof(IsActive), true)]  // Only enabled when IsActive is true
     [ClearWhen(nameof(IsActive), false)]  // Clears value when IsActive becomes false
     public string ActiveNotes { get; set; }
     
+    [Group("Ratings")]
     [Rating(5)]  // Display as 5-star rating control
     public int CustomerRating { get; set; }
     
+    [Group("Ratings")]
     [Compute("CalculateTotalScore")]
     [WatchProperties(nameof(CustomerRating), nameof(IsActive))]
     public decimal TotalScore { get; set; }
     
+    [Group("Attachments")]
     [File("All Files (*.*)|*.*")]  // File picker control
     [VisibleWhen(nameof(IsActive), true)]  // Only visible when IsActive is true
     public string? AttachmentPath { get; set; }
@@ -351,6 +363,7 @@ subscription?.Dispose();
 | Attribute | Purpose | Example |
 |-----------|---------|---------|
 | `[GridColumn(GridColumnSpan)]` | Control column span (1-6) | `[GridColumn(GridColumnSpan.Full)]` |
+| `[Group(title)]` | Group related properties in a GroupBox | `[Group("Personal Information")]` |
 | `[DropdownSource(typeof(Provider))]` | Specify dropdown provider | `[DropdownSource(typeof(CountryProvider))]` |
 | `[WatchProperty("prop")]` | Watch single property | `[WatchProperty(nameof(Country))]` |
 | `[WatchProperties("prop1", "prop2")]` | Watch multiple properties | `[WatchProperties(nameof(FirstName), nameof(LastName))]` |
@@ -378,6 +391,41 @@ public enum GridColumnSpan
     Default = Six    // Default is full width (6 columns)
 }
 ```
+
+### Grouping Controls
+
+The `[Group]` attribute allows you to visually organize related properties into labeled sections using GroupBox containers:
+
+```csharp
+public class Employee
+{
+    [Group("Personal Information")]
+    public string FirstName { get; set; }
+    
+    [Group("Personal Information")]
+    public string LastName { get; set; }
+    
+    [Group("Personal Information")]
+    public DateTime DateOfBirth { get; set; }
+    
+    [Group("Employment Details")]
+    public string Department { get; set; }
+    
+    [Group("Employment Details")]
+    [Rating(5)]
+    public int PerformanceRating { get; set; }
+    
+    // No group - will be rendered at the top
+    public string EmployeeId { get; set; }
+}
+```
+
+**Key Features:**
+- Properties with the same group title are grouped together
+- Groups are rendered in alphabetical order
+- Properties without `[Group]` appear first (ungrouped section)
+- Each group maintains the 6-column grid layout internally
+- Groups can be combined with all other attributes (`[GridColumn]`, `[EnabledWhen]`, etc.)
 
 ## 🎨 Themed Controls
 

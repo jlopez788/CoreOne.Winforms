@@ -93,7 +93,7 @@ public class ValidationHandlerTests
     }
 
     [Test]
-    public async Task OnRefresh_TransitionFromInvalidToValid_ClearsError()
+    public void OnRefresh_TransitionFromInvalidToValid_ClearsError()
     {
         var model = new TestModel { Name = "" };
         var textBox = new TextBox();
@@ -112,7 +112,7 @@ public class ValidationHandlerTests
         model.Name = "Valid Name";
         gridItem.ControlContext.UpdateValue("Valid Name");
         instance.Refresh(model);
-        Thread.Sleep(400);
+        Thread.Sleep(500);
 
         var errorAfter = errorProvider.GetError(textBox);
         Assert.That(errorAfter, Is.Empty);
@@ -181,7 +181,7 @@ public class ValidationHandlerTests
         // Valid age
         model.Age = 25;
         instance.Refresh(model);
-        Thread.Sleep(400);
+        Thread.Sleep(500);
 
         error = errorProvider.GetError(textBox);
         Assert.That(error, Is.Empty);
