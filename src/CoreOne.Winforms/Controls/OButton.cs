@@ -141,7 +141,6 @@ public class OButton : Control, IButtonControl
     private void UpdateHoverRegion(Point location)
     {
         var newRegion = HoverRegion.Main;
-
         if (ContextMenuStrip?.Items.Count > 0 && SplitWidth > 0)
         {
             var splitView = SplitView;
