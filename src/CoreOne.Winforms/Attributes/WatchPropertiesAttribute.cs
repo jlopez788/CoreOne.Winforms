@@ -1,3 +1,5 @@
+using CoreOne.Comparers;
+
 namespace CoreOne.Winforms.Attributes;
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]

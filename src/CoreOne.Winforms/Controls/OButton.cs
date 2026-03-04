@@ -7,11 +7,6 @@ namespace CoreOne.Winforms.Controls;
 
 public class OButton : Control, IButtonControl
 {
-    private readonly LoadingCircle Loading;
-    private readonly ControlStateManager StateManager;
-    private readonly SToken Token;
-    private HoverRegion CurrentHoverRegion = HoverRegion.None;
-
     private enum HoverRegion
     {
         None,
@@ -19,9 +14,22 @@ public class OButton : Control, IButtonControl
         Chevron
     }
 
+    private readonly LoadingCircle Loading;
+    private readonly ControlStateManager StateManager;
+    private readonly SToken Token;
+    private HoverRegion CurrentHoverRegion = HoverRegion.None;
     [DefaultValue(0)]
     [RefreshProperties(RefreshProperties.Repaint)]
     public int Border { get; set; }
+    [DefaultValue(0)]
+    [RefreshProperties(RefreshProperties.Repaint)]
+    public int BorderRadius {
+        get;
+        set {
+            field = value.Bounds(0, int.MaxValue);
+            Invalidate();
+        }
+    }
     [Browsable(false)]
     public InvokeTask? Clicked { get; set; }
     public DialogResult DialogResult { get; set; }
@@ -108,20 +116,6 @@ public class OButton : Control, IButtonControl
         }
     }
 
-    protected override void OnMouseUp(MouseEventArgs e)
-    {
-        if (!IsMenuClicked(e))
-        {
-            MouseEvent(base.OnMouseUp, e);
-        }
-    }
-
-    protected override void OnMouseMove(MouseEventArgs e)
-    {
-        base.OnMouseMove(e);
-        UpdateHoverRegion(e.Location);
-    }
-
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
@@ -138,19 +132,17 @@ public class OButton : Control, IButtonControl
         Invalidate();
     }
 
-    private void UpdateHoverRegion(Point location)
+    protected override void OnMouseMove(MouseEventArgs e)
     {
-        var newRegion = HoverRegion.Main;
-        if (ContextMenuStrip?.Items.Count > 0 && SplitWidth > 0)
-        {
-            var splitView = SplitView;
-            newRegion = splitView.Contains(location) ? HoverRegion.Chevron : HoverRegion.Main;
-        }
+        base.OnMouseMove(e);
+        UpdateHoverRegion(e.Location);
+    }
 
-        if (CurrentHoverRegion != newRegion)
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        if (!IsMenuClicked(e))
         {
-            CurrentHoverRegion = newRegion;
-            Invalidate();
+            MouseEvent(base.OnMouseUp, e);
         }
     }
 
@@ -213,16 +205,23 @@ public class OButton : Control, IButtonControl
 
     private void RenderBackground(Graphics g, bool checkd)
     {
-        var radius = 4;
-        var viewport = DisplayRectangle;
+        var viewport = new Rectangle(
+                ClientRectangle.X + Padding.Left,
+                ClientRectangle.Y + Padding.Top,
+                ClientRectangle.Width - Padding.Horizontal,
+                ClientRectangle.Height - Padding.Vertical);
         var backColor = StateManager.BackColor(true);
         var borderColor = StateManager.BorderColor(checkd);
 
         viewport.Inflate(-1, -1);
-        using var path = Drawings.RoundRect(viewport, radius);
+        using var path = Drawings.RoundRect(viewport, BorderRadius);
         using var brush = StateManager.BackBrush(viewport, true);
-        g.Clear(backColor);
+        g.Clear(Parent?.BackColor ?? backColor);
         g.FillPath(brush, path);
+        if (BorderRadius > 0)
+        {
+            g.FillPath(new SolidBrush(backColor), path);
+        }
         if (Border > 0)
         {
             using var pen = new Pen(borderColor, Border);
@@ -257,7 +256,7 @@ public class OButton : Control, IButtonControl
             }
 
             // Create a clip region for the highlight area
-            using var highlightPath = Drawings.RoundRect(highlightRect, radius);
+            using var highlightPath = Drawings.RoundRect(highlightRect, BorderRadius);
             g.SetClip(highlightPath, CombineMode.Intersect);
 
             var pressed = StateManager.State == State.Pressed;
@@ -298,5 +297,21 @@ public class OButton : Control, IButtonControl
         int lineYTo = lineYFrom + arrowY;
         using var separatorPen = new Pen(foreColor) { DashStyle = DashStyle.Dot };
         g.DrawLine(separatorPen, lineX, lineYFrom, lineX, lineYTo);
+    }
+
+    private void UpdateHoverRegion(Point location)
+    {
+        var newRegion = HoverRegion.Main;
+        if (ContextMenuStrip?.Items.Count > 0 && SplitWidth > 0)
+        {
+            var splitView = SplitView;
+            newRegion = splitView.Contains(location) ? HoverRegion.Chevron : HoverRegion.Main;
+        }
+
+        if (CurrentHoverRegion != newRegion)
+        {
+            CurrentHoverRegion = newRegion;
+            Invalidate();
+        }
     }
 }

@@ -230,6 +230,12 @@ public static class Drawings
     public static GraphicsPath RoundRect(RectangleF rect, float diameter)
     {
         var path = new GraphicsPath();
+        if (diameter <= 0)
+        {
+            path.AddRectangle(rect);
+            return path;
+        }
+
         var arc = new RectangleF(rect.X, rect.Y, diameter, diameter);
         path.AddArc(arc, 180, 90);
         arc.X = rect.Right - diameter;

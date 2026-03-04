@@ -8,13 +8,15 @@ namespace CoreOne.Winforms.Controls;
 
 public class AnimatedPanel : Control
 {
+    private record CurrentContext(IView View, ViewEventArgs Args);
     public event EventHandler? AnimationComplete;
     private readonly Stack<History> History;
     private readonly Point Origin = new(0, 0);
-    private readonly List<Predicate<IView>> Rules;
+    private readonly List<Func<IView, ViewEventArgs, bool>> Rules;
     private readonly Subject<(History history, bool isEmpty)> Stream = new();
     private readonly SToken Token = SToken.Create();
-    public IView? CurrentView { get; private set; }
+    private CurrentContext? Current;
+    public IView? CurrentView => Current?.View;
     public bool IsAnimating { get; private set; }
     public TypeViewManager? ViewManager { get; set; }
     protected string? Home { get; private set; }
@@ -22,12 +24,24 @@ public class AnimatedPanel : Control
 
     public AnimatedPanel()
     {
-        CurrentView = null;
         History = new Stack<History>(100);
         Rules = [
-            v => v is null,
-            v => CurrentView?.Name.Matches(v.Name) ?? false
+            (v,_)=> v is null,
+            sameName,
+            shouldDisplay
         ];
+
+        bool sameName(IView view, ViewEventArgs args)
+        {
+            var sameView = CurrentView?.Name.Matches(view.Name) ?? false;
+            var sameArgs = sameView && (Current?.Args.Equals(args) ?? false);
+            return !(!sameView || (sameView && !sameArgs));
+        }
+        bool shouldDisplay(IView view, ViewEventArgs args)
+        {
+            view.ShouldDisplay(ref args);
+            return args.Cancel;
+        }
     }
 
     public void ChangeView(ViewEventArgs e, bool swipeleft = true) => this.CrossThread(() => OnChangeView(e, swipeleft));
@@ -87,20 +101,13 @@ public class AnimatedPanel : Control
 
             Stream.OnNext((history, History.Count == 0));
         }
-        var view = new Result<ViewEventArgs>(args, true)
-            .Select(() => ResolveView(args.Name)).Model;
-        if (view == null || Rules.Any(rule => rule(view)))
+        var view = ResolveView(args);
+        if (view == null || Rules.Any(rule => rule(view, args)))
         {
             return;
         }
 
-        view.ShouldDisplay(ref args);
-        if (args.Cancel)
-        {
-            return;
-        }
-
-        CurrentView = view;
+        Current = new CurrentContext(view, args);
         if (args.AddToHistory)
         {
             var history = new History(args.Name, args.Args);
@@ -155,9 +162,9 @@ public class AnimatedPanel : Control
         }
     }
 
-    private IView? ResolveView(string? name)
+    private IView? ResolveView(ViewEventArgs eventArgs)
     {
-        var view = ViewManager?.Resolve(name);
+        var view = ViewManager?.Resolve(eventArgs);
         if (view != null)
         {
             var parent = FindForm();

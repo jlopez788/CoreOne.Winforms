@@ -1,3 +1,5 @@
+using CoreOne.Operations;
+
 namespace CoreOne.Winforms.Attributes;
 
 /// <summary>

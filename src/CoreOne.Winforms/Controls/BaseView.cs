@@ -23,7 +23,7 @@ public class BaseView : Control, IView
 
     public void ViewLoaded() => OnViewLoaded();
 
-    protected static bool GetIndex<T>(IReadOnlyList<object> args, int idx, Action<T> callback)
+    protected static bool GetIndex<T>(IReadOnlyList<object>? args, int idx, Action<T> callback)
     {
         bool invoked = false;
         if (args?.Count > 0 && idx < args.Count && args[idx] is T model)
