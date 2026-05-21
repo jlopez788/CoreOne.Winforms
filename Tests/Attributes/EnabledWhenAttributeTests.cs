@@ -1,5 +1,4 @@
-using CoreOne.Attributes;
-using CoreOne.Models;
+using CoreOne.Operations;
 using CoreOne.Winforms.Attributes;
 
 namespace CoreOne.Winforms.Tests.Attributes;
@@ -22,7 +21,7 @@ public class EnabledWhenAttributeTests
     public void Constructor_WithComparisonType_SetsCorrectly()
     {
         var attribute = new EnabledWhenAttribute("Age", 18, ComparisonType.GreaterThanOrEqualTo);
-        
+
         Assert.That(attribute.ComparisonType, Is.EqualTo(ComparisonType.GreaterThanOrEqualTo));
     }
 }

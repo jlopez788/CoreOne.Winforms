@@ -1,5 +1,5 @@
-using CoreOne.Winforms.Services;
 using CoreOne.Winforms.Controls;
+using CoreOne.Winforms.Services;
 using System.Reflection;
 
 namespace Tests.Services;
@@ -10,7 +10,7 @@ public class TypeViewManagerTests
     public void Constructor_WithoutServiceProvider_CreatesInstance()
     {
         var manager = new TypeViewManager();
-        
+
         Assert.That(manager, Is.Not.Null);
     }
 
@@ -20,7 +20,7 @@ public class TypeViewManagerTests
         var manager = new TypeViewManager(type => new TestView());
         manager.Set("TestView", typeof(TestView));
 
-        var view = manager.Resolve("TestView");
+        var view = manager.Resolve(new("TestView"));
 
         Assert.That(view, Is.Not.Null);
         Assert.That(view, Is.InstanceOf<CoreOne.Winforms.IView>());
@@ -32,7 +32,7 @@ public class TypeViewManagerTests
         var manager = new TypeViewManager(type => new TestView());
         manager.Set("Test", typeof(TestView));
 
-        var view = manager.Resolve("TestView");
+        var view = manager.Resolve(new("TestView"));
 
         Assert.That(view, Is.Not.Null);
     }
@@ -43,7 +43,7 @@ public class TypeViewManagerTests
         var manager = new TypeViewManager(type => new TestView());
         manager.Set("Test", typeof(TestView)); // Register without "View" suffix
 
-        var view = manager.Resolve("Test");
+        var view = manager.Resolve(new("Test"));
 
         Assert.That(view, Is.Not.Null);
     }
@@ -53,7 +53,7 @@ public class TypeViewManagerTests
     {
         var manager = new TypeViewManager(type => new TestView());
 
-        var view = manager.Resolve("NonExistent");
+        var view = manager.Resolve(new("NonExistent"));
 
         Assert.That(view, Is.Null);
     }
@@ -63,7 +63,7 @@ public class TypeViewManagerTests
     {
         var manager = new TypeViewManager(type => new TestView());
 
-        var view = manager.Resolve(null);
+        var view = manager.Resolve(new(("")));
 
         Assert.That(view, Is.Null);
     }
@@ -77,7 +77,7 @@ public class TypeViewManagerTests
         manager.RegisterViews(assembly);
 
         // Verify manager can now resolve TestView
-        var view = manager.Resolve("Test");
+        var view = manager.Resolve(new("Test"));
         Assert.That(view, Is.Not.Null);
     }
 
@@ -138,7 +138,7 @@ public class TypeViewManagerTests
         var manager = new TypeViewManager(type => resolvedView);
         manager.Set("Test", typeof(TestView));
 
-        var view = manager.Resolve("Test");
+        var view = manager.Resolve(new("Test"));
 
         Assert.That(view, Is.SameAs(resolvedView));
     }
@@ -149,7 +149,7 @@ public class TypeViewManagerTests
         var manager = new TypeViewManager(type => new TestView());
         manager.Set("TestView", typeof(TestView));
 
-        var view = manager.Resolve("testview");
+        var view = manager.Resolve(new("testview"));
 
         Assert.That(view, Is.Not.Null);
     }
@@ -180,8 +180,10 @@ public class TypeViewManagerTests
     public void RegisterViews_WithMultipleViews_RegistersAll()
     {
         var manager = new TypeViewManager(type => {
-            if (type == typeof(TestView)) return new TestView();
-            if (type == typeof(AnotherTestView)) return new AnotherTestView();
+            if (type == typeof(TestView))
+                return new TestView();
+            if (type == typeof(AnotherTestView))
+                return new AnotherTestView();
             throw new InvalidOperationException();
         });
         var assembly = Assembly.GetExecutingAssembly();
