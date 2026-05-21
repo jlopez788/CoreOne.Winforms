@@ -71,15 +71,13 @@ public class PropertyGridItemFactory : IPropertyGridItemFactory
         controlContext.UpdateValue(currentValue);
         controlContext.BindEvent();
 
-        var propertyItem = new PropertyGridItem(controlContext, property, controlContext.UpdateValue) {
+        return new PropertyGridItem(controlContext, property, controlContext.UpdateValue) {
             Property = property,
             Label = label,
             Container = container,
             ColumnSpan = columnSpan,
             ErrorProvider = errorProvider
         };
-
-        return propertyItem;
 
         GridColumnSpan GetColumnSpan(Metadata property)
         {

@@ -1,6 +1,4 @@
-using CoreOne.Attributes;
-using CoreOne.Extensions;
-using CoreOne.Models;
+using CoreOne.Operations;
 using CoreOne.Reflection;
 using CoreOne.Winforms.Attributes;
 using CoreOne.Winforms.Models;
@@ -62,7 +60,7 @@ public class ClearWhenHandlerTests
 
         var handler = _factory.CreateInstance(gridItem);
         Assert.That(handler, Is.Not.Null);
-        
+
         handler.Refresh(new TestModel { Country = "Test" }); // Trigger dependency tracking
 
         Assert.That(handler!.Dependencies, Does.Contain(nameof(TestModel.Country)));

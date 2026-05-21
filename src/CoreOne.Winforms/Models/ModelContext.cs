@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace CoreOne.Winforms.Models;
 
-public class ModelContext
+public class ModelContext : Disposable
 {
     private const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
     private readonly DataList<string, Metadata> DependencyMap = new(StringComparer.OrdinalIgnoreCase);
@@ -110,6 +110,12 @@ public class ModelContext
         IsModified = false;
         Transaction.Rollback();
         Transaction = new ModelTransaction(Model);
+    }
+
+    protected override void OnDispose()
+    {
+        Transaction.Dispose();
+        base.OnDispose();
     }
 
     public record GroupEntry(List<Metadata> Properties, int GroupId, int Priority);
