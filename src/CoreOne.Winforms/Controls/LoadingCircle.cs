@@ -191,11 +191,11 @@ public class LoadingCircle : Control
     public LoadingCircle()
     {
         Token = this.CreateSToken();
-        LoadingStore.Subscribe(p => {
-            Active = p;
+        LoadingStore.Subscribe(active => {
+            Active = active;
             if (Parent is not null)
             {
-                Parent.Enabled = p;
+                Parent.Enabled = !active;
                 Parent.Invalidate();
             }
         }, Token);
@@ -235,9 +235,9 @@ public class LoadingCircle : Control
         return proposedSize;
     }
 
-    public Task<TResult?> GetResultAsync<TResult>(InvokeTask<TResult> callback, CancellationToken cancellationToken = default) => LoadingStore.GetResultAsync(callback, null, cancellationToken);
+    public ValueTask<TResult?> GetResultAsync<TResult>(InvokeTask<TResult> callback, CancellationToken cancellationToken = default) => LoadingStore.GetResultAsync(callback, null, cancellationToken);
 
-    public Task InvokeAsync(InvokeTask? callback, CancellationToken cancellationToken = default) => LoadingStore.InvokeAsync(new InvokeCallback(callback), cancellationToken);
+    public ValueTask InvokeAsync(InvokeTask? callback, CancellationToken cancellationToken = default) => LoadingStore.InvokeAsync(new InvokeCallback(callback), cancellationToken);
 
     public void PaintSpinner(Graphics graphics)
     {
@@ -272,7 +272,11 @@ public class LoadingCircle : Control
         Invalidate();
     }
 
-    public void Subscribe(Action<bool> callback, SToken token) => LoadingStore.Subscribe(callback, token);
+    public void Subscribe(Action<bool> callback, SToken token)
+    {
+        callback.Invoke(IsBusy);
+        LoadingStore.Subscribe(callback, token);
+    }
 
     /// <summary>
     /// Clean up any resources being used.

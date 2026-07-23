@@ -4,6 +4,7 @@ internal class TransitionChain
 {
     private readonly List<Transition> _Transitions;
     public CancellationToken CancellationToken { get; }
+    private SToken Token = SToken.Create();
 
     public TransitionChain(Transition[] transitions)
     {
@@ -13,23 +14,23 @@ internal class TransitionChain
 
     public TransitionChain(Transition[] transitions, CancellationToken cancellationToken) : this(transitions) => CancellationToken = cancellationToken;
 
-    private void OnTransitionCompleted(object? sender, EventArgs e)
+    private void OnTransitionCompleted()
     {
-        if (sender is Transition transition)
-        {
-            transition.TransitionCompletedEvent -= OnTransitionCompleted;
-            _Transitions.RemoveAt(0);
-            Run();
-        }
+        _Transitions.RemoveAt(0);
+        Run();
     }
 
     private void Run()
     {
+        Token.Dispose();
         if (_Transitions.Count > 0)
         {
             var nextTransition = _Transitions[0];
-            nextTransition.TransitionCompletedEvent += OnTransitionCompleted;
-            nextTransition.Run(CancellationToken);
+            Token = SToken.Create();
+
+            nextTransition
+                .OnComplete(OnTransitionCompleted, Token)
+                .Run(CancellationToken);
         }
     }
 }

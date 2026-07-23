@@ -18,11 +18,19 @@ internal class TransitionManager
 
     public void Register(Transition transition)
     {
+        var token = SToken.Create();
         lock (Lock)
         {
             RemoveDuplicates(transition);
             Transitions[transition] = true;
-            transition.TransitionCompletedEvent += OnTransitionCompleted;
+            transition.OnComplete(OnTransitionCompleted, token);
+        }
+
+        void OnTransitionCompleted()
+        {
+            token.Dispose();
+            lock (Lock)
+                Transitions.Remove(transition);
         }
     }
 
@@ -59,16 +67,6 @@ internal class TransitionManager
         foreach (var transition in listTransitions)
             transition.OnTimer();
         Timer.Enabled = true;
-    }
-
-    private void OnTransitionCompleted(object? sender, EventArgs? e)
-    {
-        if (sender is Transition transition)
-        {
-            transition.TransitionCompletedEvent -= OnTransitionCompleted;
-            lock (Lock)
-                Transitions.Remove(transition);
-        }
     }
 
     private void RemoveDuplicates(Transition transition)

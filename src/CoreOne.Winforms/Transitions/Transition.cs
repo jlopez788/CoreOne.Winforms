@@ -1,5 +1,6 @@
 ﻿using CoreOne.Reactive;
 using CoreOne.Winforms.Transitions.ManagedType;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq.Expressions;
@@ -33,12 +34,12 @@ public class Transition(ITransitionType transitionMethod)
     }
 
     public event EventHandler? StepProperty;
-    public event EventHandler? TransitionCompletedEvent;
     private static readonly Dictionary<Type, IManagedType> ManagedTypes = [];
     private readonly Lock Lock = new();
     private readonly ITransitionType? OTransition = transitionMethod;
     private readonly Subject<bool> Stream = new();
     private readonly Stopwatch Watch = new();
+    private ImmutableList<Action> CompleteCallback = [];
     public CancellationToken CancellationToken { get; set; }
     internal List<TransitionedPropertyInfo> TransitionedProperties { get; } = [];
 
@@ -90,6 +91,17 @@ public class Transition(ITransitionType transitionMethod)
         return this;
     }
 
+    public Transition OnComplete(Action callback, CancellationToken cancellationToken = default)
+    {
+        if (callback is not null)
+        {
+            CompleteCallback = CompleteCallback.Add(callback);
+            if (cancellationToken != default)
+                cancellationToken.Register(() => CompleteCallback = CompleteCallback.Remove(callback));
+        }
+        return this;
+    }
+
     public Transition RegisterOnFrameCompleted(Action callback, SToken token)
     {
         Stream.Subscribe(p => callback.Invoke(), token);
@@ -111,12 +123,17 @@ public class Transition(ITransitionType transitionMethod)
         TransitionManager.Instance.Register(this);
     }
 
+    private void MarkTransitionComplete()
+    {
+        Watch.Stop();
+        CompleteCallback.Each(p => p.Invoke());
+    }
+
     internal void OnTimer()
     {
         if (CancellationToken.IsCancellationRequested)
         {
-            Watch.Stop();
-            Utility.RaiseEvent(TransitionCompletedEvent, this);
+            MarkTransitionComplete();
             return;
         }
 
@@ -143,8 +160,7 @@ public class Transition(ITransitionType transitionMethod)
         Stream.OnNext(true);
         if (completed)
         {
-            Watch.Stop();
-            Utility.RaiseEvent(TransitionCompletedEvent, this);
+            MarkTransitionComplete();
         }
     }
 

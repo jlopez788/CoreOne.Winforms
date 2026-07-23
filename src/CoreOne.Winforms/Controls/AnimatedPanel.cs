@@ -118,7 +118,7 @@ public class AnimatedPanel : Control
         view.Size = Size;
         view.Reload(args.Args);
 
-        void AnimationComplete(object? sender, EventArgs _)
+        void AnimationComplete()
         {
             IsAnimating = false;
             if (Controls.Count == 2)
@@ -134,7 +134,7 @@ public class AnimatedPanel : Control
             Point
                 starting = swipeleft ? LeftEdge : Origin,
                 ending = swipeleft ? Origin : LeftEdge;
-            transition.TransitionCompletedEvent += AnimationComplete;
+            transition.OnComplete(AnimationComplete);
             view.Location = starting;
             Controls.Add((Control)view);
             if (Controls.Count > 1)
@@ -158,7 +158,7 @@ public class AnimatedPanel : Control
         else
         {
             Controls.Add((Control)view);
-            AnimationComplete(this, EventArgs.Empty);
+            AnimationComplete();
         }
     }
 
