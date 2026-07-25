@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0-windows</TargetFramework>
+        <TargetFrameworks>net10.0-windows;net9.0-windows</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
@@ -28,12 +28,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CoreOne" Version="1.3.2.4" />
+        <PackageReference Include="CoreOne" Version="1.5.8" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
+        <ProjectReference Include="..\CoreOne.Drawing\CoreOne.Drawing.csproj" />
     </ItemGroup>
- 
 
 </Project>
