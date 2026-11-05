@@ -18,8 +18,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CoreOne" Version="1.5.8" />
-        <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+        <PackageReference Include="CoreOne" Version="1.6.0.1" />
+        <PackageReference Include="System.Drawing.Common" Version="10.0.14" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
