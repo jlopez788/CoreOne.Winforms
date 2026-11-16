@@ -1,6 +1,6 @@
 ﻿namespace CoreOne.Winforms.Services;
 
-public class FormContainerHostService(IEnumerable<IHostedFormService> services)
+public class FormContainerHostService(IEnumerable<IHostedFormService> services, IEnumerable<IHostedService> hostedServices):IDictionar
 {
     private readonly AToken Token = AToken.Create();
 
