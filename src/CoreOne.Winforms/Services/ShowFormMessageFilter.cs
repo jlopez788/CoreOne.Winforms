@@ -9,7 +9,7 @@ public class ShowFormMessageFilter(IntPtr handle) : IMessageFilter
     public bool PreFilterMessage(ref Message m)
     {
         bool handled = false;
-        if (m.Msg == Startup.WM_SHOWFIRSTINSTANCE)
+        if (Startup.WM_SHOWFIRSTINSTANCE != 0 && m.Msg == Startup.WM_SHOWFIRSTINSTANCE)
         {
             handled = true;
             WindowsApi.ShowToFront(Handle);

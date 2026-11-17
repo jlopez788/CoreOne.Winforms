@@ -29,6 +29,9 @@ public static partial class WindowsApi
     [DllImport("user32")]
     public static extern bool PostMessage(IntPtr hWnd, int msg, IntPtr wparam, IntPtr lparam);
 
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern int RegisterWindowMessage(string lpString);
+
     [DllImport("user32.dll")]
     public static extern bool ReleaseCapture();
 

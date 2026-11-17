@@ -1,6 +1,7 @@
 ﻿using CoreOne.Winforms.Native;
 using CoreOne.Winforms.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace CoreOne.Winforms;
 
@@ -18,136 +19,119 @@ public static class Startup
 
     public static IResult Run<T>(bool sinlgeInstance = false) where T : Form => Run<T>(null, sinlgeInstance);
 
-    public static IResult Run<T>(IServiceProvider? serviceProvider, bool sinlgeInstance = false) where T : Form
+    public static IResult Run<T>(IServiceProvider? services, bool sinlgeInstance = false) where T : Form
     {
         Mutex? mutex = null;
-        var result = Result.Ok;
-        try
-        {
-            if (serviceProvider != null)
-                Services = serviceProvider;
-            if (sinlgeInstance)
-            {
-                var createForm = CreateFormMutex<T>(out mutex);
-                if (createForm)
-                {
-                    result = RunForm<T>(serviceProvider, true);
-                }
-                else
-                {
-                    ShowFirstInstance();
-                }
-            }
-            else
-            {
-                result = RunForm<T>(serviceProvider);
-            }
-        }
-        catch (Exception ex)
-        {
-            result = new Result(ResultType.Exception, ex.Message);
-        }
-        finally
-        {
+        var ownsMutex = false;
+        var appContext = new ApplicationContext();
+        var task = new TaskCompletionSource<IResult>();
+        var host = services?.GetService<FormContainerHostService>();
+        var logger = services?.GetService<ILogger<T>>();
+
+        if (SynchronizationContext.Current is not WindowsFormsSynchronizationContext)
+            SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+
+        ApplicationRunAsync();
+        Application.Run(appContext);
+
+        if (ownsMutex)
             mutex?.ReleaseMutex();
-        }
+        mutex?.Dispose();
 
-        return result;
-    }
+        return Task.Factory.StartNew(async () => {
+            if (host != null)
+            {
+                await host.Stop();
+                await host.DisposeAsync();
+            }
 
-    public static async ValueTask<IResult> RunAsync<T>(IServiceProvider serviceProvider, bool sinlgeInstance = false) where T : Form
-    {
-        Mutex? mutex = null;
-        var result = Result.Ok;
-        try
+            return await task.Task;
+        }).Unwrap().GetAwaiter().GetResult();
+
+        async void ApplicationRunAsync()
         {
-            Services = serviceProvider;
-
-            var host = serviceProvider.GetService<FormContainerHostService>();
             try
             {
                 if (host != null)
                     await host.Initialize();
+
                 if (sinlgeInstance)
                 {
-                    var createForm = CreateFormMutex<T>(out mutex);
-                    if (createForm)
+                    ownsMutex = CreateFormMutex<T>(out mutex);
+                    if (ownsMutex)
                     {
-                        result = RunForm<T>(serviceProvider, true);
+                        AssignFormToContext();
                     }
                     else
                     {
                         ShowFirstInstance();
+                        appContext.ExitThread();
                     }
                 }
                 else
                 {
-                    result = RunForm<T>(serviceProvider);
+                    AssignFormToContext();
                 }
-            }
-            finally
-            {
-                if (host != null)
-                {
-                    await host.Stop();
-                    await host.DisposeAsync();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            result = new Result(ResultType.Exception, ex.Message);
-        }
-        finally
-        {
-            mutex?.ReleaseMutex();
-        }
 
-        return result;
+                task.TrySetResult(Result.Ok);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogEntryX(ex, "Startup.Run<{Type}> failed: {Message}", typeof(T).Name, ex.Message);
+                task.TrySetResult(new Result(ResultType.Exception, ex.Message));
+                appContext.ExitThread();
+            }
+        }
+        void AssignFormToContext()
+        {
+            var form = GetFormInstance<T>(services, sinlgeInstance);
+            if (form is not null)
+            {
+                appContext.MainForm = form;
+                form.Show();
+            }
+            else
+            {
+                appContext.ExitThread();
+            }
+        }
     }
 
     private static bool CreateFormMutex<T>(out Mutex mutex)
     {
         var type = typeof(T);
         AssemblyGuid = Utility.Crc32(type.FullName).Model ?? "";
+        if (WM_SHOWFIRSTINSTANCE == 0)
+            WM_SHOWFIRSTINSTANCE = WindowsApi.RegisterWindowMessage(WinMessage);
         mutex = new Mutex(true, Name, out bool createForm);
         return createForm;
     }
 
-    private static IResult RunForm<T>(IServiceProvider? serviceProvider, bool attachHandler = false) where T : Form
+    private static T? GetFormInstance<T>(IServiceProvider? services, bool attachHandler = false) where T : Form
     {
-        var result = Result.Ok;
-        try
+        var type = typeof(T);
+        var instance = services?.GetService(type);
+        instance ??= services?.GetTargetCreator()
+            .CreateInstance(type);
+        instance ??= TypeUtility.GetInstance(type);
+        if (instance is T form)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            var type = typeof(T);
-            var instance = serviceProvider?.GetService(type);
-            instance ??= serviceProvider.GetTargetCreator()
-                .CreateInstance(type);
-            if (instance is T form)
+            if (attachHandler)
             {
-                if (attachHandler)
-                {
-                    FormClosingEventHandler disposed = default!;
-                    var handler = new EventHandler((s, e) => Application.AddMessageFilter(new ShowFormMessageFilter(form.Handle)));
-                    disposed = new FormClosingEventHandler((s, e) => {
-                        form.HandleCreated -= handler;
-                        form.FormClosing -= disposed;
-                    });
-                    form.HandleCreated += handler;
-                    form.FormClosing += disposed;
-                }
-                Application.Run(form);
+                FormClosingEventHandler disposed = default!;
+                var handler = new EventHandler((s, e) => Application.AddMessageFilter(new ShowFormMessageFilter(form.Handle)));
+                disposed = new FormClosingEventHandler((s, e) => {
+                    form.HandleCreated -= handler;
+                    form.FormClosing -= disposed;
+                });
+                form.HandleCreated += handler;
+                form.FormClosing += disposed;
             }
-        }
-        catch (Exception ex)
-        {
-            result = Result.FromException(ex);
+
+            return form;
         }
 
-        return result;
+        return null;
     }
 
     private static void ShowFirstInstance() => WindowsApi.PostMessage(WindowsApi.HWND_BROADCAST, WM_SHOWFIRSTINSTANCE, IntPtr.Zero, IntPtr.Zero);

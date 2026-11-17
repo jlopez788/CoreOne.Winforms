@@ -1,29 +1,35 @@
-﻿namespace CoreOne.Winforms.Services;
+﻿using Microsoft.Extensions.Hosting;
 
-public class FormContainerHostService(IEnumerable<IHostedFormService> services, IEnumerable<IHostedService> hostedServices):IDictionar
+namespace CoreOne.Winforms.Services;
+
+public class FormContainerHostService(IEnumerable<IHostedService> hostedServices) : IAsyncDisposable
 {
     private readonly AToken Token = AToken.Create();
+    private bool _stopped;
 
     public async ValueTask DisposeAsync()
     {
-        await Execute((p, ct) => {
-            if (p is IAsyncDisposable adisposable)
-                return adisposable.DisposeAsync();
-            else if (p is IDisposable disposable)
-                disposable.Dispose();
-            return ValueTask.CompletedTask;
-        }, CancellationToken.None);
+        if (!_stopped)
+            await Stop();
+
+        await Token.DisposeAsync();
+
+        GC.SuppressFinalize(this);
     }
 
-    public ValueTask Initialize() => Execute((p, ct) => p.Initialize(ct), Token);
+    public ValueTask Initialize() => ExecuteHostedServices((p, ct) => p.StartAsync(ct), Token);
 
-    public ValueTask Stop() => Execute((p, ct) => p.StoppingService(ct), Token);
-
-    private async ValueTask Execute(Func<IHostedFormService, CancellationToken, ValueTask> callback, CancellationToken cancellationToken)
+    public async ValueTask Stop()
     {
-        if (services.Any())
+        _stopped = true;
+        await ExecuteHostedServices((p, ct) => p.StopAsync(ct), Token);
+    }
+
+    private async ValueTask ExecuteHostedServices(Func<IHostedService, CancellationToken, Task> callback, CancellationToken cancellationToken)
+    {
+        if (hostedServices.Any())
         {
-            var tasks = services.SelectArray(p => callback(p, cancellationToken).AsTask());
+            var tasks = hostedServices.SelectArray(p => callback(p, cancellationToken));
             await Task.WhenAll(tasks);
         }
     }
