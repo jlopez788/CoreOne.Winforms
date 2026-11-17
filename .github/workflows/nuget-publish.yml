@@ -15,6 +15,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +41,7 @@ jobs:
       - name: Get project version
         id: get_version
         run: |
-          VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" ${{ matrix.project.path }})
+          VERSION=$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' ${{ matrix.project.path }} | head -n1)
           echo "Package version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -47,6 +50,10 @@ jobs:
         run: |
           VERSION="${{ steps.get_version.outputs.version }}"
           PACKAGE_NAME="${{ matrix.project.name }}"
+          # NuGet normalizes versions (1.5 -> 1.5.0, 1.5.0.0 -> 1.5.0)
+          IFS=. read -r V1 V2 V3 V4 <<< "$VERSION"
+          VERSION="$V1.${V2:-0}.${V3:-0}"
+          if [ -n "$V4" ] && [ "$V4" != "0" ]; then VERSION="$VERSION.$V4"; fi
           STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://api.nuget.org/v3-flatcontainer/$PACKAGE_NAME/$VERSION/$PACKAGE_NAME.$VERSION.nupkg)
 
           if [ "$STATUS_CODE" -eq 200 ]; then
